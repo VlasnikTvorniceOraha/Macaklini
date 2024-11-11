@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 using Unity.VisualScripting;
 using UnityEditor;
 
-public class UIManager : MonoBehaviour
+public class UIManager : NetworkBehaviour
 {
     // Start is called before the first frame update
     NetworkManager networkManager;
@@ -20,18 +20,83 @@ public class UIManager : MonoBehaviour
 
     public GameObject lobbyScreen;
 
+    public GameObject PlayerPanel;
+    NetworkVariable<int> playersConnected = new NetworkVariable<int>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
+    
+
     void Start()
     {
         networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
         unityTransport = networkManager.gameObject.GetComponent<UnityTransport>();
+        networkManager.OnClientConnectedCallback += PlayerConnected;
+        playersConnected.OnValueChanged += updateReadyNumber;
+        
+
         
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            //Log
+            Debug.Log(playersConnected.Value);
+        }
+    }
+
+    private void PlayerConnected(ulong obj)
+    {
+        
+        //ako ima vise od 4, disconnectaj
+        if (playersConnected.Value >= 4)
+        {
+            Debug.Log("Previse igraca");
+            networkManager.Shutdown();
+        }
+
+        //igrac se joinao, instanciraj objekt u lobiju i igraca na mapi
+
+        HostJoin.SetActive(false);
+        lobbyScreen.SetActive(true);
+        if (IsOwner)
+        {
+            playersConnected.Value += 1;
+        }
+        Debug.Log("Player connected: " + obj);
+        
+        Transform playerPanelList = lobbyScreen.transform.Find("Panel").Find("Players");
+        foreach (Transform playerPanel in playerPanelList)
+        {
+            if (!playerPanel.gameObject.activeSelf)
+            {
+                //ukljuci i ispuni tekstom i imenom i slikom
+                playerPanel.gameObject.SetActive(true);
+                playerPanel.Find("Status").GetComponent<TMP_Text>().text = "Connected";
+                playerPanel.Find("Ime").GetComponent<TMP_Text>().text = "Gunster" + obj;
+                //nesto sa slikom ali to kasnije
+                break;
+            }
+        }
+
+        
+        
+
+
 
     }
+
+
+    
+
+    public void updateReadyNumber(int prevValue, int newValue)
+    {
+        Debug.Log("Number of players: " + playersConnected.Value);
+        //updateaj ready text
+        lobbyScreen.transform.Find("Panel").Find("Ready").GetComponent<TMP_Text>().text = newValue + "/4";
+    }
+
 
     public void HostButton()
     {
@@ -52,19 +117,7 @@ public class UIManager : MonoBehaviour
 
         unityTransport.SetConnectionData(IPfield.text, (ushort)port);
 
-        if (networkManager.StartHost())
-        {
-            //uspjesno pokrenut host
-            HostJoin.SetActive(false);
-            lobbyScreen.SetActive(true);
-            //dodaj playera i takva sranja etc.
-        }
-        else
-        {
-            //neuspjeh!
-            Error.SetActive(true);
-            return;
-        }
+        networkManager.StartHost();
         
         
 
@@ -89,22 +142,12 @@ public class UIManager : MonoBehaviour
 
         unityTransport.SetConnectionData(IPfield.text, (ushort)port);
 
-        if (networkManager.StartClient())
-        {
-            //uspjesno pokrenut host
-            HostJoin.SetActive(false);
-            lobbyScreen.SetActive(true);
-            //dodaj playera i takva sranja etc.
-        }
-        else
-        {
-            //neuspjeh!
-            Error.SetActive(true);
-            return;
-        }
+        networkManager.StartClient();
         
     }
 
+    
+    
     public void ExitButton()
     {
         //izadi iz igre
