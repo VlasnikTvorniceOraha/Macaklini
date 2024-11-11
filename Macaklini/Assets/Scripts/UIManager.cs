@@ -7,6 +7,7 @@ using Unity.Netcode.Transports.UTP;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
 using UnityEditor;
+using System;
 
 public class UIManager : NetworkBehaviour
 {
@@ -29,12 +30,13 @@ public class UIManager : NetworkBehaviour
     {
         networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
         unityTransport = networkManager.gameObject.GetComponent<UnityTransport>();
-        networkManager.OnClientConnectedCallback += PlayerConnected;
+        networkManager.OnConnectionEvent += PlayerConnected;
         playersConnected.OnValueChanged += updateReadyNumber;
         
 
         
     }
+
 
     // Update is called once per frame
     void Update()
@@ -46,7 +48,9 @@ public class UIManager : NetworkBehaviour
         }
     }
 
-    private void PlayerConnected(ulong obj)
+    
+
+    private void PlayerConnected(NetworkManager manager, ConnectionEventData data)
     {
         
         //ako ima vise od 4, disconnectaj
@@ -64,7 +68,7 @@ public class UIManager : NetworkBehaviour
         {
             playersConnected.Value += 1;
         }
-        Debug.Log("Player connected: " + obj);
+        Debug.Log("Player connected: " + data.ClientId);
         
         Transform playerPanelList = lobbyScreen.transform.Find("Panel").Find("Players");
         foreach (Transform playerPanel in playerPanelList)
@@ -74,7 +78,7 @@ public class UIManager : NetworkBehaviour
                 //ukljuci i ispuni tekstom i imenom i slikom
                 playerPanel.gameObject.SetActive(true);
                 playerPanel.Find("Status").GetComponent<TMP_Text>().text = "Connected";
-                playerPanel.Find("Ime").GetComponent<TMP_Text>().text = "Gunster" + obj;
+                playerPanel.Find("Ime").GetComponent<TMP_Text>().text = "Gunster" + data.ClientId;
                 //nesto sa slikom ali to kasnije
                 break;
             }
@@ -87,7 +91,12 @@ public class UIManager : NetworkBehaviour
 
     }
 
-
+    [Rpc(SendTo.NotServer)]
+    private void SyncPanelsRpc()
+    {
+        //RPC za syncanje panela na svim klijentima
+        
+    }
     
 
     public void updateReadyNumber(int prevValue, int newValue)
