@@ -12,9 +12,7 @@ public class PlayerController : NetworkBehaviour
     Rigidbody2D rb2d;
 
     public float MovementSpeed = 1f;
-
     public float JumpForce = 1f;
-
     float horizontal;
     void Start()
     {
@@ -40,7 +38,6 @@ public class PlayerController : NetworkBehaviour
         {
             rb2d.velocity = new Vector2(horizontal * MovementSpeed, rb2d.velocity.y);
         }
-        
     }
 
     void Movement()
