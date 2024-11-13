@@ -438,7 +438,7 @@ GameObject:
   - component: {fileID: 594537719}
   - component: {fileID: 594537721}
   - component: {fileID: 594537720}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Zid (9)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -650,7 +650,7 @@ GameObject:
   - component: {fileID: 664841163}
   - component: {fileID: 664841165}
   - component: {fileID: 664841164}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Zid (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -910,7 +910,7 @@ GameObject:
   - component: {fileID: 738754727}
   - component: {fileID: 738754729}
   - component: {fileID: 738754728}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Zid
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1040,7 +1040,7 @@ GameObject:
   - component: {fileID: 807138370}
   - component: {fileID: 807138372}
   - component: {fileID: 807138371}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Zid (7)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1170,7 +1170,7 @@ GameObject:
   - component: {fileID: 839519851}
   - component: {fileID: 839519853}
   - component: {fileID: 839519852}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Zid (8)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1300,7 +1300,7 @@ GameObject:
   - component: {fileID: 1148904370}
   - component: {fileID: 1148904372}
   - component: {fileID: 1148904371}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Zid (10)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1560,7 +1560,7 @@ GameObject:
   - component: {fileID: 1384170871}
   - component: {fileID: 1384170873}
   - component: {fileID: 1384170872}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Zid (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2146,6 +2146,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3025690062917107310, guid: 2ac8f2c27e6bde341a27032716dfa6e3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3237186623402585832, guid: 2ac8f2c27e6bde341a27032716dfa6e3, type: 3}
+      propertyPath: m_UiScaleMode
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4315572813802630524, guid: 2ac8f2c27e6bde341a27032716dfa6e3, type: 3}
