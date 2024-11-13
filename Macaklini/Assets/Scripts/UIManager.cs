@@ -8,6 +8,8 @@ using UnityEngine.UIElements;
 using Unity.VisualScripting;
 using UnityEditor;
 using System;
+using System.Linq;
+using DefaultNamespace;
 
 public class UIManager : NetworkBehaviour
 {
@@ -240,6 +242,23 @@ public class UIManager : NetworkBehaviour
         {
             Debug.Log("Nemoj zajebavati");
             return;
+        }
+        
+        // set spawn locations for each of the players
+        for (int i = 0; i < networkManager.ConnectedClients.Keys.Count(); i++)
+        {
+            ulong playerKey = networkManager.ConnectedClients.Keys.ElementAt(i);
+            NetworkClient player = networkManager.ConnectedClients[playerKey];
+            player.PlayerObject.transform.position = SpawnLocations.spawnLocations[player.ClientId];
+            Rigidbody2D rb = player.PlayerObject.GetComponent<Rigidbody2D>();
+            if (!rb)
+            {
+                Debug.LogFormat("nije naso rb2D, nekaj ne valja");
+            }
+            else
+            {
+                rb.bodyType = RigidbodyType2D.Dynamic;
+            }
         }
 
         gameStarted.Value = true;

@@ -4,12 +4,12 @@ namespace DefaultNamespace
 {
     public class SpawnLocations
     {
-        Vector2[] spawnLocations =
+        public static Vector3[] spawnLocations =
         {
-            new Vector2(-8, -3.5f),
-            new Vector2(-8, 1),
-            new Vector2(8, -3.5f),
-            new Vector2(8, 1),
+            new Vector3(-8, -3.5f, 0),
+            new Vector3(-8, 1, 0),
+            new Vector3(8, -3.5f, 0),
+            new Vector3(8, 1, 0),
         };
     }
 }
