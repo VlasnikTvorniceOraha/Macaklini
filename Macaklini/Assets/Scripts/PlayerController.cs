@@ -10,15 +10,12 @@ public class PlayerController : NetworkBehaviour
     UnityTransport unityTransport;
     UIManager uiManager;
     Rigidbody2D rb2d;
-    Vector3 spawnPoint1 = new Vector3(-5f,-2f,0f);
-    Vector3 spawnPoint2 = new Vector3(5f,-2f,0f);
 
     public Transform groundCheck;
     public LayerMask groundLayer;
     bool isGrounded;
 
     public float MovementSpeed = 1f;
-
     public float JumpForce = 20f;
 
     float horizontal;
@@ -57,6 +54,7 @@ public class PlayerController : NetworkBehaviour
             {
                 rb2d.gravityScale = 1.5f;
             }
+            
             if (shouldJump)
             {
                 shouldJump = false;
@@ -69,7 +67,6 @@ public class PlayerController : NetworkBehaviour
     void Movement()
     {
         horizontal = Input.GetAxisRaw("Horizontal");
-
         if (horizontal < 0)
         {
             spriteRenderer.flipX = false;
@@ -80,7 +77,7 @@ public class PlayerController : NetworkBehaviour
         }
 
         isGrounded = Physics2D.Raycast(groundCheck.position, Vector2.down, 1, groundLayer);
-        Debug.Log(isGrounded);
+        Debug.LogFormat("isGrounded: {0}", isGrounded);
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
             shouldJump = true;
@@ -96,20 +93,18 @@ public class PlayerController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-        
 
         //if you are the owner and the host, set the player to spawnPoint1 and rename the player to "Host"
         if (IsOwner && IsHost)
         {
-            transform.SetPositionAndRotation(spawnPoint1, new Quaternion());
+            transform.SetPositionAndRotation(SpawnLocations.SampleSceneSpawnLocations[0], new Quaternion());
             //playerName.Value = "Host";
         }
         //if you are the owner and the client, set the player to spawnPoint2 and rename the player to "Client"
         else if (IsOwner && IsClient)
         {
-            transform.SetPositionAndRotation(spawnPoint2, new Quaternion());
+            transform.SetPositionAndRotation(SpawnLocations.SampleSceneSpawnLocations[1], new Quaternion());
             //playerName.Value = "Client";
         }
     }
-
 }
