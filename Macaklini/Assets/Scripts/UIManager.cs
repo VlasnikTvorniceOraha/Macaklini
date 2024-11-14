@@ -1,78 +1,65 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
-using UnityEngine.UIElements;
-using Unity.VisualScripting;
 using UnityEditor;
-using System;
 
 public class UIManager : NetworkBehaviour
 {
     // Start is called before the first frame update
-    NetworkManager networkManager;
-    UnityTransport unityTransport;
+    private NetworkManager _networkManager;
+    private UnityTransport _unityTransport;
 
+    // UI screen for server creation/joining
     public GameObject HostJoin;
-
+    // idk
     public GameObject serverBrowser;
-
+    // UI screen that shows up after entering a lobby
     public GameObject lobbyScreen;
-
+    // player info that shows up when a player enters a lobby
     public GameObject PlayerPanel;
+    // UI background color
     public GameObject background;
+    
     private NetworkVariable<int> playersConnected = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-
     public NetworkVariable<bool> gameStarted = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     
-
-    
-
     void Start()
     {
-        networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
-        unityTransport = networkManager.gameObject.GetComponent<UnityTransport>();
-        networkManager.OnConnectionEvent += PlayerConnected;
+        _networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
+        _unityTransport = _networkManager.gameObject.GetComponent<UnityTransport>();
+        _networkManager.OnConnectionEvent += PlayerConnected;
         
         //playersConnected.OnValueChanged = updateReadyNumber;
-
         playersConnected.OnValueChanged += updateReadyNumber;
-        
-
-        
     }
-
 
     // Update is called once per frame
     void Update()
     {
+        // press L for logging
         if (Input.GetKeyDown(KeyCode.L))
         {
-            //Log
-            Debug.Log(playersConnected.Value);
-            Debug.Log(gameStarted.Value);
+            Debug.LogFormat("playersConnected.Value: {0}", playersConnected.Value);
+            Debug.LogFormat("gameStarted.Value: {0}", gameStarted.Value);
         }
     }
-
     
-
     private void PlayerConnected(NetworkManager manager, ConnectionEventData data)
     {
-        Debug.Log(data.EventType);
+        Debug.LogFormat("data.EventType: {0}", data.EventType);
 
         if (data.EventType == ConnectionEvent.ClientConnected)
         {
-            //ako ima vise od 4, disconnectaj
+            // ako ima vise od 4, disconnectaj
             if (playersConnected.Value >= 4 || gameStarted.Value)
             {
                 Debug.Log("Previse igraca ili kasnis");
-                networkManager.Shutdown();
+                _networkManager.Shutdown();
                 return;
             }
 
-            //klijent se spojio, syncaj ga
+            // klijent se spojio, syncaj ga
             HostJoin.SetActive(false);
             lobbyScreen.SetActive(true);
             if (IsServer)
@@ -80,7 +67,7 @@ public class UIManager : NetworkBehaviour
                 playersConnected.Value += 1;
             }
 
-            Debug.Log("Player connected: " + data.ClientId);
+            Debug.LogFormat("Player with ClientId {0} connected", data.ClientId);
         
             Transform playerPanelList = lobbyScreen.transform.Find("Panel").Find("Players");
             bool[] ukljuceniPaneli = new bool[4] {false, false, false, false};
@@ -89,10 +76,10 @@ public class UIManager : NetworkBehaviour
             {
                 if (!playerPanel.gameObject.activeSelf)
                 {
-                    //ukljuci i ispuni tekstom i imenom i slikom
+                    // ukljuci i ispuni tekstom i imenom i slikom
                     playerPanel.gameObject.SetActive(true);
                     playerPanel.Find("Status").GetComponent<TMP_Text>().text = "Connected";
-                    //nesto sa slikom ali to kasnije
+                    // nesto sa slikom ali to kasnije
                     ukljuceniPaneli[brojac] = true;
                     break;
                 }
@@ -102,7 +89,7 @@ public class UIManager : NetworkBehaviour
                 }
                 brojac += 1;
             }
-            //syncaj panele na klijentskoj strani
+            // syncaj panele na klijentskoj strani
             SyncPanelsRpc(ukljuceniPaneli);
 
 
@@ -147,22 +134,18 @@ public class UIManager : NetworkBehaviour
             }
 
             SyncPanelsRpc(ukljuceniPaneli);
-
         }
-
-
-
     }
 
+    // RPC za syncanje panela na svim klijentima
     [Rpc(SendTo.NotServer)]
     private void SyncPanelsRpc(bool[] ukljuceniPaneli)
     {
-        //RPC za syncanje panela na svim klijentima
         Transform lobbyPlayers = lobbyScreen.transform.Find("Panel").Find("Players");
 
         for (int i = 0; i < ukljuceniPaneli.Length; i++)
         {
-            //panel je ukljucen
+            // panel je ukljucen
             if (ukljuceniPaneli[i])
             {
                 lobbyPlayers.GetChild(i).gameObject.SetActive(true);
@@ -170,103 +153,85 @@ public class UIManager : NetworkBehaviour
             }
             else
             {
-                //panel nije ukljucen
+                // panel nije ukljucen
                 lobbyPlayers.GetChild(i).gameObject.SetActive(false);
             }
         }
 
-        //imena kasnije isto ig
-        
+        // todo: imena kasnije isto ig
     }
 
+    // zapocni igru i osposobi kretanje svim igracima
     [Rpc(SendTo.ClientsAndHost)]
     private void StartGameRpc()
     {
-        //zapocni igru i osposobi kretanje svim igracima
         lobbyScreen.SetActive(false);
         background.SetActive(false);
     }
     
-
+    // updateaj panel s brojem spremnih igraca
     public void updateReadyNumber(int prevValue, int newValue)
     {
         Debug.Log("Number of players: " + newValue);
-        //updateaj ready text
         lobbyScreen.transform.Find("Panel").Find("Ready").GetComponent<TMP_Text>().text = newValue + "/4";
     }
 
-
     public void HostButton()
     {
-        Debug.Log("Dugme host");
-        //Procitaj IP i port i napravi server
-        Transform HostButton = HostJoin.transform.Find("Host");
-        TMP_InputField IPfield = HostButton.Find("IP").GetComponent<TMP_InputField>();
-        TMP_InputField Portfield = HostButton.Find("Port").GetComponent<TMP_InputField>();
-        GameObject Error = HostButton.Find("Error").gameObject;
+        Debug.Log("UIManager::HostButton");
+        
+        // Procitaj IP i port i napravi server
+        Transform hostButton = HostJoin.transform.Find("Host");
+        TMP_InputField IPfield = hostButton.Find("IP").GetComponent<TMP_InputField>();
+        TMP_InputField portField = hostButton.Find("Port").GetComponent<TMP_InputField>();
+        GameObject error = hostButton.Find("Error").gameObject;
 
-        int port;
-
-        if (!int.TryParse(Portfield.text, out port))
+        if (!int.TryParse(portField.text, out int port))
         {
-            Error.SetActive(true);
+            error.SetActive(true);
             return;
         }
 
-        unityTransport.SetConnectionData(IPfield.text, (ushort)port);
-
-        networkManager.StartHost();
-        
-        
-
+        _unityTransport.SetConnectionData(IPfield.text, (ushort)port);
+        _networkManager.StartHost();
     }
 
     public void JoinButton()
     {
-        //procitaj IP i port i napravi klijenta -> ako ne postoji server onda izbaci error
-        //Procitaj IP i port i napravi server
-        Transform JoinButton = HostJoin.transform.Find("Join");
-        TMP_InputField IPfield = JoinButton.Find("IP").GetComponent<TMP_InputField>();
-        TMP_InputField Portfield = JoinButton.Find("Port").GetComponent<TMP_InputField>();
-        GameObject Error = JoinButton.Find("Error").gameObject;
+        // procitaj IP i port i napravi klijenta -> ako ne postoji server onda izbaci error
+        Transform joinButton = HostJoin.transform.Find("Join");
+        TMP_InputField IPfield = joinButton.Find("IP").GetComponent<TMP_InputField>();
+        TMP_InputField portField = joinButton.Find("Port").GetComponent<TMP_InputField>();
+        GameObject error = joinButton.Find("Error").gameObject;
 
-        int port;
-
-        if (!int.TryParse(Portfield.text, out port))
+        if (!int.TryParse(portField.text, out int port))
         {
-            Error.SetActive(true);
+            error.SetActive(true);
             return;
         }
 
-        unityTransport.SetConnectionData(IPfield.text, (ushort)port);
-
-        networkManager.StartClient();
-        
+        _unityTransport.SetConnectionData(IPfield.text, (ushort)port);
+        _networkManager.StartClient();
     }
 
     public void StartGameButton()
     {
         if (!IsServer)
         {
-            Debug.Log("Nemoj zajebavati");
+            Debug.Log("Only the host can start the game!");
             return;
         }
 
         gameStarted.Value = true;
-
         StartGameRpc();
-
     }
-
-    
 
     public void ExitLobby()
     {
-        
-        networkManager.Shutdown();
+        // ugasi lobby i ukljuci lobby creation/join screen
+        _networkManager.Shutdown();
         HostJoin.SetActive(true);
         lobbyScreen.SetActive(false);
-
     }
     
     public void ExitButton()
@@ -274,6 +239,5 @@ public class UIManager : NetworkBehaviour
         //izadi iz igre
         EditorApplication.ExitPlaymode();
         Application.Quit();
-        
     }
 }
