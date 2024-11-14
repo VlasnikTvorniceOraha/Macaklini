@@ -118,6 +118,7 @@ public class PlayerController : NetworkBehaviour
     
     public void OnCollisionEnter2D(Collision2D other)
     {
+        return;
         //Debug.LogFormat("PlayerController::OnCollisionEnter2D");
         if (other.gameObject.CompareTag($"Sticky"))
         {
@@ -167,6 +168,7 @@ public class PlayerController : NetworkBehaviour
 
     public void OnCollisionExit2D(Collision2D other)
     {
+        return;
         //Debug.LogFormat("PlayerController::OnCollisionExit2D");
         if (other.gameObject.CompareTag($"Sticky"))
         {
