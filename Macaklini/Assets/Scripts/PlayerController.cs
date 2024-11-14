@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
@@ -16,9 +17,11 @@ public class PlayerController : NetworkBehaviour
     // movement variables
     public float MovementSpeed = 1f;
     public float JumpForce = 20f;
-    private float horizontal;
+    private float horizontalInput;
+    private float verticalInput;
     private bool shouldJump = false;
     private bool isGrounded;
+    private Vector2 _jumpDirection = Vector2.up;
     
     void Start()
     {
@@ -44,7 +47,7 @@ public class PlayerController : NetworkBehaviour
     {
         if (IsOwner)
         {
-            _rb2d.velocity = new Vector2(MovementSpeed * Time.fixedDeltaTime * horizontal, _rb2d.velocity.y);
+            _rb2d.velocity = new Vector2(MovementSpeed * Time.fixedDeltaTime * horizontalInput, _rb2d.velocity.y);
             if (!isGrounded)
             {
                 _rb2d.gravityScale = 8;
@@ -64,15 +67,17 @@ public class PlayerController : NetworkBehaviour
 
     void CheckForMovementInput()
     {
-        horizontal = Input.GetAxisRaw("Horizontal");
-        if (horizontal < 0)
+        horizontalInput = Input.GetAxisRaw("Horizontal");
+        if (horizontalInput < 0)
         {
             _spriteRenderer.flipX = false;
         }
-        else if (horizontal > 0)
+        else if (horizontalInput > 0)
         {
             _spriteRenderer.flipX = true;
         }
+        
+        verticalInput = Input.GetAxisRaw("Vertical");
 
         isGrounded = Physics2D.Raycast(groundCheck.position, Vector2.down, 1, groundLayer);
         if (Input.GetKey(KeyCode.L))
@@ -88,7 +93,9 @@ public class PlayerController : NetworkBehaviour
     void Jump()
     {
         Debug.Log("JUMP");
-        _rb2d.AddForce(Vector2.up * JumpForce, ForceMode2D.Force);
+        _rb2d.AddForce(_jumpDirection * JumpForce, ForceMode2D.Force);
+        _jumpDirection = Vector2.up;
+        _rb2d.gravityScale = 1.5f;
     }
 
     public override void OnNetworkSpawn()
@@ -106,6 +113,64 @@ public class PlayerController : NetworkBehaviour
         {
             transform.SetPositionAndRotation(SpawnLocations.SampleSceneSpawnLocations[1], new Quaternion());
             //playerName.Value = "Client";
+        }
+    }
+    
+    public void OnCollisionEnter2D(Collision2D other)
+    {
+        //Debug.LogFormat("PlayerController::OnCollisionEnter2D");
+        if (other.gameObject.CompareTag($"Sticky"))
+        {
+            //isGrounded = true;
+            //_rb2d.gravityScale = 0f;
+            // vector start is player, vector end is the sticky wall which the player has collided with
+            Vector2 cumulatedContactDirection = new Vector2(); 
+            foreach (var contact in other.contacts)
+            {
+                cumulatedContactDirection.x += contact.point.x - gameObject.transform.position.x;
+                cumulatedContactDirection.y += contact.point.y - gameObject.transform.position.y;
+            }
+            //Debug.LogFormat("cumulatedContactDirection: {0}, {1}", cumulatedContactDirection.x, cumulatedContactDirection.y);
+
+            if (MathF.Abs(cumulatedContactDirection.x) > MathF.Abs(cumulatedContactDirection.y))
+            {
+                // sticky wall is left of the player
+                if (cumulatedContactDirection.x < 0)
+                {
+                    Debug.LogFormat("sticky wall is left of the player");
+                    //_jumpDirection = Vector2.right;
+                }
+                // sticky wall is right of the player
+                else if (cumulatedContactDirection.x > 0)
+                {
+                    Debug.LogFormat("sticky wall is right of the player");
+                    //_jumpDirection = Vector2.left;
+                }
+            }
+            else if (MathF.Abs(cumulatedContactDirection.x) < MathF.Abs(cumulatedContactDirection.y))
+            {
+                // sticky wall is on top of the player
+                if (cumulatedContactDirection.y > 0)
+                {
+                    Debug.LogFormat("sticky wall is on top of the player");
+                    //_jumpDirection = Vector2.down;
+                }
+                // sticky wall is bottom of the player
+                else if (cumulatedContactDirection.y < 0)
+                {
+                    Debug.LogFormat("sticky wall is below the player");
+                    //_jumpDirection = Vector2.down;
+                }
+            }
+        }
+    }
+
+    public void OnCollisionExit2D(Collision2D other)
+    {
+        //Debug.LogFormat("PlayerController::OnCollisionExit2D");
+        if (other.gameObject.CompareTag($"Sticky"))
+        {
+            Debug.LogFormat("exit from sticky");
         }
     }
 }
