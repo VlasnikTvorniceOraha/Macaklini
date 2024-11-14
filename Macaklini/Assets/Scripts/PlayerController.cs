@@ -19,16 +19,18 @@ public class PlayerController : NetworkBehaviour
 
     public float MovementSpeed = 1f;
 
-    public float JumpForce = 2f;
+    public float JumpForce = 20f;
 
     float horizontal;
+    bool shouldJump = false;
+    SpriteRenderer spriteRenderer;
     void Start()
     {
         networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
         unityTransport = networkManager.gameObject.GetComponent<UnityTransport>();
         uiManager = GameObject.Find("UI").GetComponent<UIManager>();
         rb2d = this.GetComponent<Rigidbody2D>();
-        
+        spriteRenderer = this.GetComponent<SpriteRenderer>();
     }
 
     // Update is called once per frame
@@ -46,11 +48,18 @@ public class PlayerController : NetworkBehaviour
     {
         if (IsOwner)
         {
-    
-            rb2d.velocity = new Vector2(horizontal * MovementSpeed, rb2d.velocity.y * Time.deltaTime);
-            isGrounded = Physics2D.OverlapCapsule(groundCheck.position, new Vector2(1f, 0.2f), CapsuleDirection2D.Horizontal, 0, groundLayer);
-            if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+            rb2d.velocity = new Vector2(MovementSpeed * Time.fixedDeltaTime * horizontal, rb2d.velocity.y);
+            if (!isGrounded)
             {
+                rb2d.gravityScale = 8;
+            }
+            else
+            {
+                rb2d.gravityScale = 1.5f;
+            }
+            if (shouldJump)
+            {
+                shouldJump = false;
                 Jump();
             }
         }
@@ -60,12 +69,28 @@ public class PlayerController : NetworkBehaviour
     void Movement()
     {
         horizontal = Input.GetAxisRaw("Horizontal");
+
+        if (horizontal < 0)
+        {
+            spriteRenderer.flipX = false;
+        }
+        else if (horizontal > 0)
+        {
+            spriteRenderer.flipX = true;
+        }
+
+        isGrounded = Physics2D.Raycast(groundCheck.position, Vector2.down, 1, groundLayer);
+        Debug.Log(isGrounded);
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        {
+            shouldJump = true;
+        }
     }
 
     void Jump()
     {
         Debug.Log("JUMP");
-        rb2d.velocity = new Vector2(rb2d.velocity.x , JumpForce);
+        rb2d.AddForce(Vector2.up * JumpForce, ForceMode2D.Force);
     }
 
     public override void OnNetworkSpawn()
