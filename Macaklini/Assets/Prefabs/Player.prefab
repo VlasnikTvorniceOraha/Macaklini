@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 6998921457232496623}
   - component: {fileID: 8080569206792081715}
   - component: {fileID: 339868622033416926}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -104,7 +104,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 572327001
+  GlobalObjectIdHash: 2787483578
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -255,7 +255,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7447381240602108269}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: WeaponPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -286,7 +286,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7044355912055110175}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Grounded
   m_TagString: Untagged
   m_Icon: {fileID: 0}

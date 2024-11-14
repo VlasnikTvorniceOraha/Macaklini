@@ -1,8 +1,9 @@
 using System.Collections;
 using UnityEngine;
 using Unity.Netcode;
+using System.Globalization;
 
-public class WeaponScript : MonoBehaviour
+public class WeaponScript : NetworkBehaviour
 {
     private NetworkManager _networkManager;
     [SerializeField] private Transform shootPoint;
@@ -11,7 +12,8 @@ public class WeaponScript : MonoBehaviour
     private float _originalY;
     private bool _isEquipped = false;
     private RaycastHit2D _rayHit;
-    
+    private NetworkVariable<ulong> ownerClientId = new NetworkVariable<ulong>();
+
     // Start is called before the first frame update
     void Start()
     {
@@ -27,7 +29,7 @@ public class WeaponScript : MonoBehaviour
             transform.position = new Vector2(transform.position.x, _originalY + Mathf.Sin(5 * Time.time) * 0.1f);
         }
 
-        if (_isEquipped)
+        if (_isEquipped && ownerClientId.Value == NetworkManager.Singleton.LocalClientId)
         {
             Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector2 direction = mousePosition - transform.position;
@@ -72,12 +74,17 @@ public class WeaponScript : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.CompareTag("Player"))
+        if (collision.CompareTag("Player") && collision.TryGetComponent(out NetworkObject networkObject))
         {
             GetComponent<CircleCollider2D>().enabled = false;
             transform.parent = collision.transform;
             transform.localPosition = new Vector2(-0.25f, -0.05f);
             _isEquipped = true;
+
+            if (IsServer)
+            {
+                ownerClientId.Value = networkObject.OwnerClientId;
+            }
         }
     }
 }

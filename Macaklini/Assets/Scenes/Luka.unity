@@ -5893,9 +5893,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1365061127}
   - component: {fileID: 1365061126}
+  - component: {fileID: 1365061124}
   - component: {fileID: 1365061129}
   - component: {fileID: 1365061125}
-  - component: {fileID: 1365061124}
   - component: {fileID: 1365061128}
   m_Layer: 0
   m_Name: Shotgun
@@ -6053,11 +6053,11 @@ MonoBehaviour:
   PositionThreshold: 0.001
   RotAngleThreshold: 0.01
   ScaleThreshold: 0.01
-  UseQuaternionSynchronization: 0
-  UseQuaternionCompression: 0
+  UseQuaternionSynchronization: 1
+  UseQuaternionCompression: 1
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
-  Interpolate: 1
+  Interpolate: 0
   SlerpPosition: 0
 --- !u!114 &1365061129
 MonoBehaviour:
@@ -6075,7 +6075,7 @@ MonoBehaviour:
   bulletTrail: {fileID: 3402790938637608509, guid: 5128f059e100d1b48839ed76211f35f4, type: 3}
   whatIsEnemy:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 72
 --- !u!1 &1414372784
 GameObject:
   m_ObjectHideFlags: 0
@@ -6346,6 +6346,10 @@ PrefabInstance:
       propertyPath: m_Color.r
       value: 0.02666688
       objectReference: {fileID: 0}
+    - target: {fileID: 856715271738100840, guid: 2ac8f2c27e6bde341a27032716dfa6e3, type: 3}
+      propertyPath: m_Color.g
+      value: 0.58835566
+      objectReference: {fileID: 0}
     - target: {fileID: 2678578307330781353, guid: 2ac8f2c27e6bde341a27032716dfa6e3, type: 3}
       propertyPath: m_Type
       value: 0
@@ -6568,7 +6572,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.26174796, g: 0.28469503, b: 0.3207547, a: 0}
+  m_BackGroundColor: {r: 0.21137416, g: 0.26932913, b: 0.3584906, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0

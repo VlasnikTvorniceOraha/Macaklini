@@ -237,7 +237,7 @@ public class UIManager : NetworkBehaviour
     public void ExitButton()
     {
         //izadi iz igre
-        EditorApplication.ExitPlaymode();
+        //EditorApplication.ExitPlaymode();
         Application.Quit();
     }
 }
