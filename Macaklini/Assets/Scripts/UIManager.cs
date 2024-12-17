@@ -26,9 +26,13 @@ public class UIManager : NetworkBehaviour
     // UserInfo panel
     [SerializeField] private GameObject userInfo;
 
+    [SerializeField] private GameObject scoreBoard;
+
     [SerializeField] private List<Sprite> GUNsterSpriteovi = new List<Sprite>();
     //lista imena i gunstera za svakog igraca u lobbyu, spremljena na serveru
     private List<PlayerInfoLobby> playerInfos = new List<PlayerInfoLobby>();
+
+    private GameManager gameManager;
 
     //play info klijenta
     private PlayerInfoLobby localPlayerInfo = new PlayerInfoLobby();
@@ -45,6 +49,10 @@ public class UIManager : NetworkBehaviour
         _networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
         _unityTransport = _networkManager.gameObject.GetComponent<UnityTransport>();
         _networkManager.OnConnectionEvent += PlayerConnected;
+
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+
+        DontDestroyOnLoad(this.gameObject);
         
         // callback da se poveca broj u lobbyu
         playersConnected.OnValueChanged += updateReadyNumber;
@@ -292,6 +300,7 @@ public class UIManager : NetworkBehaviour
         }
 
         gameStarted.Value = true;
+        gameManager.ReceivePlayerInfo(playerInfos);
         StartGameRpc();
     }
 

@@ -22,6 +22,8 @@ public class PlayerController : NetworkBehaviour
     private bool shouldJump = false;
     private bool isGrounded;
     private Vector2 _jumpDirection = Vector2.up;
+
+    public NetworkVariable<bool> isAlive = new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     
     void Start()
     {
