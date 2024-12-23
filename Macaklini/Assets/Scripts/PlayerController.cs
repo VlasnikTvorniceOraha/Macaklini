@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
+using Unity.Networking.Transport;
 
 public class PlayerController : NetworkBehaviour
 {
@@ -10,6 +11,7 @@ public class PlayerController : NetworkBehaviour
     private UIManager _uiManager;
     private Rigidbody2D _rb2d;
     private SpriteRenderer _spriteRenderer;
+    private GameManager _gameManager;
 
     public Transform groundCheck;
     public LayerMask groundLayer;
@@ -33,6 +35,9 @@ public class PlayerController : NetworkBehaviour
         _rb2d = this.GetComponent<Rigidbody2D>();
         _rb2d.bodyType = RigidbodyType2D.Dynamic;
         _spriteRenderer = this.GetComponent<SpriteRenderer>();
+        _gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        
+
     }
 
     // Update is called once per frame
@@ -103,6 +108,9 @@ public class PlayerController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+        Debug.Log("Spawnan igrac");
+        isAlive.Value = true;
+        isAlive.OnValueChanged += checkForEndOfRoundAfterPlayerDeath;
 
         // if you are the owner and the host, set the player to spawnPoint1 and rename the player to "Host"
         if (IsOwner && IsHost)
@@ -115,6 +123,15 @@ public class PlayerController : NetworkBehaviour
         {
             transform.SetPositionAndRotation(SpawnLocations.SampleSceneSpawnLocations[1], new Quaternion());
             //playerName.Value = "Client";
+        }
+    }
+
+    void checkForEndOfRoundAfterPlayerDeath(bool prevValue, bool newValue)
+    {
+        if (newValue == false)
+        {
+            //igrac je umro
+            _gameManager.CheckForEndOfRound();
         }
     }
     

@@ -1898,6 +1898,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b4870d72d95207943b717380be326716, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerPrefab: {fileID: 1539061595510465819, guid: e747488dd13085640a0c9fd0863fc164, type: 3}
   LevelsToLoad:
   - SampleScene
   - DemoScene
@@ -1979,7 +1980,7 @@ MonoBehaviour:
   NetworkConfig:
     ProtocolVersion: 0
     NetworkTransport: {fileID: 1788416531}
-    PlayerPrefab: {fileID: 1539061595510465819, guid: e747488dd13085640a0c9fd0863fc164, type: 3}
+    PlayerPrefab: {fileID: 0}
     Prefabs:
       NetworkPrefabsLists:
       - {fileID: 11400000, guid: 060802c404e6b3f498d204d1da4d7cba, type: 2}

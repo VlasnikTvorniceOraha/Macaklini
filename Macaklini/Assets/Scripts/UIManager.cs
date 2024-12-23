@@ -28,7 +28,7 @@ public class UIManager : NetworkBehaviour
 
     [SerializeField] private GameObject scoreBoard;
 
-    [SerializeField] private List<Sprite> GUNsterSpriteovi = new List<Sprite>();
+    public List<Sprite> GUNsterSpriteovi = new List<Sprite>();
     //lista imena i gunstera za svakog igraca u lobbyu, spremljena na serveru
     private List<PlayerInfoLobby> playerInfos = new List<PlayerInfoLobby>();
 

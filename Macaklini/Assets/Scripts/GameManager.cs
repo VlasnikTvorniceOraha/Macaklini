@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using Unity.Netcode;
 using Unity.Services.Authentication;
@@ -12,11 +13,13 @@ public class GameManager : NetworkBehaviour
     private NetworkManager _networkManager;
 
     private UIManager ui;
+
+    [SerializeField] private GameObject playerPrefab;
     // Start is called before the first frame update
     //lista na serveru za sve igrace
     List<PlayerInfoGame> playerInfosGame = new List<PlayerInfoGame>();
 
-    [SerializeField] List<string> LevelsToLoad = new List<string>();
+    [SerializeField] private List<string> LevelsToLoad = new List<string>();
 
     [SerializeField] private int gamesNeededToWin;
 
@@ -38,7 +41,7 @@ public class GameManager : NetworkBehaviour
         Intermission
     }
 
-    [SerializeField] RoundState roundState;
+    [SerializeField] private RoundState roundState;
 
     void Start()
     {
@@ -47,6 +50,7 @@ public class GameManager : NetworkBehaviour
         ui = GameObject.Find("UI").GetComponent<UIManager>();
         scoreboard = ui.transform.Find("Scoreboard").gameObject;
         roundNumber = 0;
+        roundState = RoundState.RoundStarting;
 
         foreach (Transform playerScorecard in scoreboard.transform.Find("Players"))
         {
@@ -66,7 +70,17 @@ public class GameManager : NetworkBehaviour
     {
         if (Input.GetKeyDown(KeyCode.P) && IsServer)
         {
-            UpdateScoreBoard();
+            UpdateScoreBoardRpc(playerInfosGame.ToArray());
+        }
+
+        if (Input.GetKeyDown(KeyCode.L) && IsServer)
+        {
+            CheckForEndOfRound();
+        }
+
+        if (Input.GetKeyDown(KeyCode.K) && IsServer)
+        {
+            StartRound();
         }
 
         if (Input.GetKeyDown(KeyCode.Tab) && ui.gameStarted.Value)
@@ -77,26 +91,107 @@ public class GameManager : NetworkBehaviour
 
     void RoundCountdown()
     {
+        // Server only
+        if (!IsServer)
+        {
+            return;
+        }
+        
         //ukljuci countdown za runde
     }
 
     void StartRound()
     {
+        // Server only
+        if (!IsServer)
+        {
+            return;
+        }
+        Debug.Log("Runda pocinje");
+        roundState = RoundState.RoundStarting;
         //odaberi level, resetaj sve igrace i zapocni starting screen
+        string currentLevel = SceneManager.GetActiveScene().name;
+
+        //rollaj random level osim trenutnog
+        List<string> levelsToChooseFrom = LevelsToLoad.Where(level => level != currentLevel).ToList();
+        Debug.Log(levelsToChooseFrom);
+
+        int index = UnityEngine.Random.Range(0, levelsToChooseFrom.Count);
+
+        //ovo postaviti svim klijentima
+        SceneManager.LoadSceneAsync(levelsToChooseFrom[index]);
+
+        roundState = RoundState.RoundInProgress;
     }
 
-    void EndRound()
+    void EndRound(PlayerInfoGame roundWinner)
     {
+        // Server only
+        if (!IsServer)
+        {
+            return;
+        }
+
+        Debug.Log("Runda zavrsava");
+
+        roundState = RoundState.RoundEnding;
+
+        if (roundWinner == null)
+        {
+            //Svi mrtvi
+        }
+        else
+        {
+            //netko je ipak pobijedio
+        }
 
     }
 
-    void CheckForEndOfRound()
+    public void CheckForEndOfRound()
     {
+        // Server only
+        if (!IsServer)
+        {
+            return;
+        }
+        //provjeri kraj runde sekundu nakon necije smrti
         //ako je samo jedan igrac ostao ziv -> zavrsi rundu
+        //ako nitko nije ziv isto zavrsi rundu
+        Debug.Log("Provjerama kraj runde");
+        int alive = playerInfosGame.Count;
+        List<PlayerInfoGame> alivePlayers = new List<PlayerInfoGame>();
+
+        foreach (PlayerInfoGame player in playerInfosGame)
+        {
+            if (!player.playerController.isAlive.Value)
+            {
+                alive -= 1;
+            }
+            else 
+            {
+                alivePlayers.Add(player);
+            }
+        }
+
+        if (alive == 1)
+        {
+            EndRound(alivePlayers[0]);
+        }
+        else if (alive == 0)
+        {
+            EndRound(null);
+        }
+
     }
 
     void EndGame(PlayerInfoGame winner)
     {
+        if (!IsServer)
+        {
+            return;
+        }
+        Debug.Log("Igra zavrsava");
+        roundState = RoundState.GameEnding;
 
     }
 
@@ -105,12 +200,16 @@ public class GameManager : NetworkBehaviour
         scoreboard.SetActive(!scoreboard.activeSelf);
     }
 
-    void UpdateScoreBoard()
+    [Rpc(SendTo.ClientsAndHost)]
+    private void UpdateScoreBoardRpc(PlayerInfoGame[] playerInfoGames)
+    {
+        UpdateScoreBoard(playerInfoGames.ToList());
+    }
+
+    void UpdateScoreBoard(List<PlayerInfoGame> playerInfoGames)
     {
         //za svakog igraca ispuni podatke u scoreboardu
         //ispuni i donji panel sa informacija o levelu i rundi
-
-        Transform playersTransform = scoreboard.transform.Find("Players");
 
         foreach (PlayerInfoGame player in playerInfosGame)
         {
@@ -137,8 +236,17 @@ public class GameManager : NetworkBehaviour
 
     }
 
+
+
     void WinRound(int winnerClientId)
     {
+        // Server only
+        if (!IsServer)
+        {
+            return;
+        }
+
+
         foreach (PlayerInfoGame player in playerInfosGame)
         {
             if (player.ClientId == winnerClientId)
@@ -154,13 +262,19 @@ public class GameManager : NetworkBehaviour
         }
 
         roundState = RoundState.RoundEnding;
-        UpdateScoreBoard();
+        UpdateScoreBoardRpc(playerInfosGame.ToArray());
         return;
 
     }
 
     void AddDeath(int clientId)
     {
+        // Server only
+        if (!IsServer)
+        {
+            return;
+        }
+
         foreach (PlayerInfoGame player in playerInfosGame)
         {
             if (player.ClientId == clientId)
@@ -169,11 +283,30 @@ public class GameManager : NetworkBehaviour
                 
             }
         }
-        UpdateScoreBoard();
+        StartCoroutine(AfterDeathCheck());
+        UpdateScoreBoardRpc(playerInfosGame.ToArray());
+    }
+
+    IEnumerator AfterDeathCheck()
+    {
+        yield return new WaitForSeconds(1.0f);
+
+        if (roundState == RoundState.RoundInProgress)
+        {
+            CheckForEndOfRound();
+        }
+
+        
     }
 
     void AddKill(int clientId)
     {
+        // Server only
+        if (!IsServer)
+        {
+            return;
+        }
+
         foreach (PlayerInfoGame player in playerInfosGame)
         {
             if (player.ClientId == clientId)
@@ -182,7 +315,7 @@ public class GameManager : NetworkBehaviour
                 
             }
         }
-        UpdateScoreBoard();
+        UpdateScoreBoardRpc(playerInfosGame.ToArray());
     }
 
 
@@ -194,10 +327,25 @@ public class GameManager : NetworkBehaviour
 
     public void ReceivePlayerInfo(List<PlayerInfoLobby> playerInfos)
     {
+        // Server only
+        if (!IsServer)
+        {
+            return;
+        }
+
         //dobiti ces informacije od lobbya o igracima u igri i treba prekopirati u ovu skriptu
 
         foreach (PlayerInfoLobby player in playerInfos)
         {
+            //OVDJE INSTANCIRATI IGRACA
+
+            GameObject playerInstance = Instantiate(playerPrefab);
+            playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject((ulong)player.ClientId);
+            playerInstance.GetComponent<SpriteRenderer>().sprite = ui.GUNsterSpriteovi[player.PlayerGunster];
+
+
+
+            //Popunjavanje player info game
             PlayerInfoGame currentPlayer = new PlayerInfoGame();
 
             currentPlayer.ClientId = player.ClientId;
@@ -205,6 +353,8 @@ public class GameManager : NetworkBehaviour
             currentPlayer.roundsWon = 0;
             currentPlayer.deaths = 0;
             currentPlayer.kills = 0;
+            currentPlayer.playerController = playerInstance.GetComponent<PlayerController>();
+        
 
             playerInfosGame.Add(currentPlayer);
         }
