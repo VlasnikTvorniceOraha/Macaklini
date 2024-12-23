@@ -11,4 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Luka.unity
     guid: bf12156b3ac597440ad7171ffaccaffb
+  - enabled: 1
+    path: Assets/Scenes/Borna.unity
+    guid: 722a568c5eafa0b4cada8105ef763dd4
   m_configObjects: {}
