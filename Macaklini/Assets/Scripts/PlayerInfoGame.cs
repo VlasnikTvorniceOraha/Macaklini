@@ -8,6 +8,7 @@ public class PlayerInfoGame : INetworkSerializable
 {
     public int ClientId;
     public string PlayerName;
+    public int PlayerGunster;
     public int roundsWon;
     public int kills;
     public int deaths;
@@ -17,6 +18,7 @@ public class PlayerInfoGame : INetworkSerializable
     {
         serializer.SerializeValue(ref ClientId);
         serializer.SerializeValue(ref PlayerName);
+        serializer.SerializeValue(ref PlayerGunster);
         serializer.SerializeValue(ref roundsWon);
         serializer.SerializeValue(ref kills);
         serializer.SerializeValue(ref deaths);

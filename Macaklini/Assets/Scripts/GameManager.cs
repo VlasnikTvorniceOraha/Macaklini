@@ -31,8 +31,10 @@ public class GameManager : NetworkBehaviour
 
     List<Transform> playerScorecards = new List<Transform>();
 
+    TMP_Text readyText;
+
     //moguca stanja runde
-    private enum RoundState 
+    public enum RoundState 
     {
         RoundStarting,
         RoundInProgress,
@@ -41,16 +43,25 @@ public class GameManager : NetworkBehaviour
         Intermission
     }
 
-    [SerializeField] private RoundState roundState;
+    public RoundState roundState;
 
     void Start()
     {
+        //provjeri je li vec postoji gamemangaer instanca i ako da ubi se
+        int instances = FindObjectsOfType<GameManager>().Length;
+        if (instances != 1)
+        {
+            //upucaj se
+            Destroy(this.gameObject);
+            return;
+        }
         DontDestroyOnLoad(this.gameObject);
         _networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
         ui = GameObject.Find("UI").GetComponent<UIManager>();
+        readyText = ui.transform.Find("ReadyText").GetComponent<TMP_Text>();
         scoreboard = ui.transform.Find("Scoreboard").gameObject;
         roundNumber = 0;
-        roundState = RoundState.RoundStarting;
+        roundState = RoundState.RoundEnding;
 
         foreach (Transform playerScorecard in scoreboard.transform.Find("Players"))
         {
@@ -63,6 +74,8 @@ public class GameManager : NetworkBehaviour
         {
             playerControllers.Add(player.GetComponent<PlayerController>());
         }
+
+        SceneManager.sceneLoaded += StartRoundServer;
     }
 
     // Update is called once per frame
@@ -75,13 +88,13 @@ public class GameManager : NetworkBehaviour
 
         if (Input.GetKeyDown(KeyCode.L) && IsServer)
         {
-            CheckForEndOfRound();
+            
         }
-
         if (Input.GetKeyDown(KeyCode.K) && IsServer)
         {
-            StartRound();
+            CheckForEndOfRound();
         }
+        
 
         if (Input.GetKeyDown(KeyCode.Tab) && ui.gameStarted.Value)
         {
@@ -89,42 +102,70 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    void RoundCountdown()
+    void StartRoundServer(Scene scena, LoadSceneMode loadMode)
     {
         // Server only
-        if (!IsServer)
-        {
-            return;
-        }
-        
-        //ukljuci countdown za runde
-    }
-
-    void StartRound()
-    {
-        // Server only
-        if (!IsServer)
+        if (!IsServer || roundState != RoundState.RoundEnding)
         {
             return;
         }
         Debug.Log("Runda pocinje");
         roundState = RoundState.RoundStarting;
-        //odaberi level, resetaj sve igrace i zapocni starting screen
-        string currentLevel = SceneManager.GetActiveScene().name;
+        //instanciraj igrace
+        InstancePlayers();
 
-        //rollaj random level osim trenutnog
-        List<string> levelsToChooseFrom = LevelsToLoad.Where(level => level != currentLevel).ToList();
-        Debug.Log(levelsToChooseFrom);
 
-        int index = UnityEngine.Random.Range(0, levelsToChooseFrom.Count);
+        //pocni countdown kada se loada i stavi rundu in progress
+        StartRoundClientsRpc();
 
-        //ovo postaviti svim klijentima
-        SceneManager.LoadSceneAsync(levelsToChooseFrom[index]);
-
-        roundState = RoundState.RoundInProgress;
+        
     }
 
-    void EndRound(PlayerInfoGame roundWinner)
+    [Rpc(SendTo.ClientsAndHost)]
+    void StartRoundClientsRpc()
+    {
+        StartCoroutine(ReadyCountdown());
+    }
+    
+
+    IEnumerator ReadyCountdown()
+    {
+        //pronadi kojeg igraca posjedujem
+        roundState = RoundState.RoundInProgress;
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        Vector3 ownedPlayerPos = Vector3.zero;
+
+        foreach (GameObject player in players)
+        {
+            if (player.GetComponent<PlayerController>().IsOwner)
+            {
+                ownedPlayerPos = player.transform.position;
+                break;
+            }
+        }
+
+        //zumiraj kameru na igraca i postavi poziciju na njega
+        Camera.main.orthographicSize = 1;
+        Camera.main.transform.position = new Vector3(ownedPlayerPos.x, ownedPlayerPos.y, -10);
+        readyText.text = "Get Ready!";
+        readyText.gameObject.SetActive(true);
+        yield return new WaitForSeconds(1.5f);
+
+        Camera.main.orthographicSize = 3;
+        readyText.text = "Set!";
+        yield return new WaitForSeconds(1.5f);
+
+        Camera.main.orthographicSize = 5;
+        Camera.main.transform.position = new Vector3(0, 0, -10);
+        readyText.text = "Go!";
+        yield return new WaitForSeconds(0.5f);
+        readyText.gameObject.SetActive(false);
+
+        
+
+    }
+
+    void EndRoundServer(PlayerInfoGame roundWinner)
     {
         // Server only
         if (!IsServer)
@@ -138,15 +179,41 @@ public class GameManager : NetworkBehaviour
 
         if (roundWinner == null)
         {
-            //Svi mrtvi
+            EndRoundClientsRpc();
         }
         else
         {
             //netko je ipak pobijedio
+            WinRound(roundWinner.ClientId);
         }
+
+        
 
     }
 
+    [Rpc(SendTo.ClientsAndHost)]
+    void EndRoundClientsRpc()
+    {
+        StartCoroutine(EndRoundCoroutine());
+    }
+
+    
+    IEnumerator EndRoundCoroutine()
+    {
+        roundState = RoundState.RoundEnding;
+        yield return new WaitForSeconds(5f);
+        string currentLevel = SceneManager.GetActiveScene().name;
+
+        //rollaj random level osim trenutnog
+        List<string> levelsToChooseFrom = LevelsToLoad.Where(level => level != currentLevel).ToList();
+        Debug.Log(levelsToChooseFrom);
+
+        int index = UnityEngine.Random.Range(0, levelsToChooseFrom.Count);
+
+        LoadSceneRpc(levelsToChooseFrom[index]);
+    }
+
+    
     public void CheckForEndOfRound()
     {
         // Server only
@@ -157,7 +224,7 @@ public class GameManager : NetworkBehaviour
         //provjeri kraj runde sekundu nakon necije smrti
         //ako je samo jedan igrac ostao ziv -> zavrsi rundu
         //ako nitko nije ziv isto zavrsi rundu
-        Debug.Log("Provjerama kraj runde");
+        Debug.Log("Provjeram kraj runde");
         int alive = playerInfosGame.Count;
         List<PlayerInfoGame> alivePlayers = new List<PlayerInfoGame>();
 
@@ -175,12 +242,14 @@ public class GameManager : NetworkBehaviour
 
         if (alive == 1)
         {
-            EndRound(alivePlayers[0]);
+            EndRoundServer(alivePlayers[0]);
         }
         else if (alive == 0)
         {
-            EndRound(null);
+            EndRoundServer(null);
         }
+
+        Debug.Log("Nuh uh, zivo je " + alivePlayers.Count + " igraca!");
 
     }
 
@@ -193,6 +262,19 @@ public class GameManager : NetworkBehaviour
         Debug.Log("Igra zavrsava");
         roundState = RoundState.GameEnding;
 
+        EndGameClientsRpc();
+
+
+    }
+
+    [Rpc(SendTo.ClientsAndHost)]
+    void EndGameClientsRpc()
+    {
+        roundState = RoundState.GameEnding;
+        ui.LobbyAfterGame();
+        SceneManager.LoadScene("MainMenu");
+        //natrag u lobby 
+        
     }
 
     void ToggleScoreboard()
@@ -204,6 +286,12 @@ public class GameManager : NetworkBehaviour
     private void UpdateScoreBoardRpc(PlayerInfoGame[] playerInfoGames)
     {
         UpdateScoreBoard(playerInfoGames.ToList());
+    }
+
+    [Rpc(SendTo.ClientsAndHost)]
+    private void LoadSceneRpc(string sceneName)
+    {
+        SceneManager.LoadSceneAsync(sceneName);
     }
 
     void UpdateScoreBoard(List<PlayerInfoGame> playerInfoGames)
@@ -263,6 +351,7 @@ public class GameManager : NetworkBehaviour
 
         roundState = RoundState.RoundEnding;
         UpdateScoreBoardRpc(playerInfosGame.ToArray());
+        EndRoundClientsRpc();
         return;
 
     }
@@ -333,15 +422,14 @@ public class GameManager : NetworkBehaviour
             return;
         }
 
+        //resetaj playerInfosGame
+        playerInfosGame.Clear();
+
         //dobiti ces informacije od lobbya o igracima u igri i treba prekopirati u ovu skriptu
 
         foreach (PlayerInfoLobby player in playerInfos)
         {
-            //OVDJE INSTANCIRATI IGRACA
 
-            GameObject playerInstance = Instantiate(playerPrefab);
-            playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject((ulong)player.ClientId);
-            playerInstance.GetComponent<SpriteRenderer>().sprite = ui.GUNsterSpriteovi[player.PlayerGunster];
 
 
 
@@ -350,13 +438,32 @@ public class GameManager : NetworkBehaviour
 
             currentPlayer.ClientId = player.ClientId;
             currentPlayer.PlayerName = player.PlayerName;
+            currentPlayer.PlayerGunster = player.PlayerGunster;
             currentPlayer.roundsWon = 0;
             currentPlayer.deaths = 0;
             currentPlayer.kills = 0;
-            currentPlayer.playerController = playerInstance.GetComponent<PlayerController>();
+            
         
 
             playerInfosGame.Add(currentPlayer);
+        }
+
+        //Pocni rundu
+        //rollaj random level
+
+        int index = UnityEngine.Random.Range(0, LevelsToLoad.Count);
+
+        LoadSceneRpc(LevelsToLoad[index]);
+    }
+
+    void InstancePlayers()
+    {
+        foreach(PlayerInfoGame currentPlayer in playerInfosGame)
+        {
+            GameObject playerInstance = Instantiate(playerPrefab);
+            playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject((ulong)currentPlayer.ClientId);
+            playerInstance.GetComponent<SpriteRenderer>().sprite = ui.GUNsterSpriteovi[currentPlayer.PlayerGunster];
+            currentPlayer.playerController = playerInstance.GetComponent<PlayerController>();
         }
     }
 }
