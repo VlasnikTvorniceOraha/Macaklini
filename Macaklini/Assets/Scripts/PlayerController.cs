@@ -149,61 +149,61 @@ public class PlayerController : NetworkBehaviour
     
     public void OnCollisionEnter2D(Collision2D other)
     {
-        return;
-        //Debug.LogFormat("PlayerController::OnCollisionEnter2D");
-        if (other.gameObject.CompareTag($"Sticky"))
+        if (!other.gameObject.CompareTag("Sticky"))
         {
-            //isGrounded = true;
-            //_rb2d.gravityScale = 0f;
-            // vector start is player, vector end is the sticky wall which the player has collided with
-            Vector2 cumulatedContactDirection = new Vector2(); 
-            foreach (var contact in other.contacts)
-            {
-                cumulatedContactDirection.x += contact.point.x - gameObject.transform.position.x;
-                cumulatedContactDirection.y += contact.point.y - gameObject.transform.position.y;
-            }
-            //Debug.LogFormat("cumulatedContactDirection: {0}, {1}", cumulatedContactDirection.x, cumulatedContactDirection.y);
+            return;
+        }
+        
+        //isGrounded = true;
+        //_rb2d.gravityScale = 0f;
+        
+        // vector start is player, vector end is the sticky wall which the player has collided with
+        Vector2 cumulatedContactDirection = new Vector2(); 
+        foreach (var contact in other.contacts)
+        {
+            cumulatedContactDirection.x += contact.point.x - gameObject.transform.position.x;
+            cumulatedContactDirection.y += contact.point.y - gameObject.transform.position.y;
+        }
+        Debug.LogFormat("cumulatedContactDirection: {0}, {1}", cumulatedContactDirection.x, cumulatedContactDirection.y);
 
-            if (MathF.Abs(cumulatedContactDirection.x) > MathF.Abs(cumulatedContactDirection.y))
+        if (MathF.Abs(cumulatedContactDirection.x) > MathF.Abs(cumulatedContactDirection.y))
+        {
+            // sticky wall is left of the player
+            if (cumulatedContactDirection.x < 0)
             {
-                // sticky wall is left of the player
-                if (cumulatedContactDirection.x < 0)
-                {
-                    Debug.LogFormat("sticky wall is left of the player");
-                    //_jumpDirection = Vector2.right;
-                }
-                // sticky wall is right of the player
-                else if (cumulatedContactDirection.x > 0)
-                {
-                    Debug.LogFormat("sticky wall is right of the player");
-                    //_jumpDirection = Vector2.left;
-                }
+                Debug.LogFormat("sticky wall is left of the player");
+                //_jumpDirection = Vector2.right;
             }
-            else if (MathF.Abs(cumulatedContactDirection.x) < MathF.Abs(cumulatedContactDirection.y))
+            // sticky wall is right of the player
+            else if (cumulatedContactDirection.x > 0)
             {
-                // sticky wall is on top of the player
-                if (cumulatedContactDirection.y > 0)
-                {
-                    Debug.LogFormat("sticky wall is on top of the player");
-                    //_jumpDirection = Vector2.down;
-                }
-                // sticky wall is bottom of the player
-                else if (cumulatedContactDirection.y < 0)
-                {
-                    Debug.LogFormat("sticky wall is below the player");
-                    //_jumpDirection = Vector2.down;
-                }
+                Debug.LogFormat("sticky wall is right of the player");
+                //_jumpDirection = Vector2.left;
             }
         }
+        else if (MathF.Abs(cumulatedContactDirection.x) < MathF.Abs(cumulatedContactDirection.y)) 
+        { 
+            // sticky wall is on top of the player
+            if (cumulatedContactDirection.y > 0)
+            {
+                Debug.LogFormat("sticky wall is on top of the player");
+                //_jumpDirection = Vector2.down;
+            }
+            // sticky wall is bottom of the player
+            else if (cumulatedContactDirection.y < 0)
+            {
+                Debug.LogFormat("sticky wall is below the player");
+                //_jumpDirection = Vector2.down;
+            }
+        }
+        
     }
 
     
     
     public void OnCollisionExit2D(Collision2D other)
     {
-        return;
-        //Debug.LogFormat("PlayerController::OnCollisionExit2D");
-        if (other.gameObject.CompareTag($"Sticky"))
+        if (other.gameObject.CompareTag("Sticky"))
         {
             Debug.LogFormat("exit from sticky");
         }

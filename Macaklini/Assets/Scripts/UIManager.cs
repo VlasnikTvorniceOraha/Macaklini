@@ -9,6 +9,8 @@ using UnityEngine.UI;
 
 public class UIManager : NetworkBehaviour
 {
+    private bool bLogFunctionNames = true;
+    
     [SerializeField] public List<Sprite> GUNsterSpriteovi = new List<Sprite>();
     
     public NetworkVariable<bool> gameStarted = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -21,8 +23,9 @@ public class UIManager : NetworkBehaviour
     [SerializeField] private NetworkVariable<int> playersConnected = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private NetworkManager _networkManager;
+    private GameManager _gameManager;
     private UnityTransport _unityTransport;
-    private List<PlayerInfoLobby> playerInfos = new List<PlayerInfoLobby>(); // lista imena i gunstera za svakog igraca u lobbyu, spremljena na serveru 
+    private List<PlayerInfoLobby> playerInfosLobby = new List<PlayerInfoLobby>(); // lista imena i gunstera za svakog igraca u lobbyu, spremljena na serveru 
     private PlayerInfoLobby localPlayerInfo = new PlayerInfoLobby(); // play info klijenta
     
     private bool receivedRpc = false;
@@ -34,7 +37,11 @@ public class UIManager : NetworkBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        if (bLogFunctionNames) { Debug.Log("UIManager::Start"); }
+        
+        DontDestroyOnLoad(gameObject);
         _networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
+        _gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         _unityTransport = _networkManager.gameObject.GetComponent<UnityTransport>();
         _networkManager.OnConnectionEvent += PlayerConnected;
         
@@ -52,9 +59,9 @@ public class UIManager : NetworkBehaviour
         {
             Debug.LogFormat("playersConnected.Value: {0}", playersConnected.Value);
             Debug.LogFormat("gameStarted.Value: {0}", gameStarted.Value);
-            Debug.LogFormat("playerinfos.count: {0}", playerInfos.Count);
+            Debug.LogFormat("playerinfos.count: {0}", playerInfosLobby.Count);
             
-            foreach (PlayerInfoLobby player in playerInfos)
+            foreach (PlayerInfoLobby player in playerInfosLobby)
             {
                 Debug.Log("Id: " + player.ClientId + ", name: " + player.PlayerName + ", gunster: " + player.PlayerGunster);
             }
@@ -65,6 +72,8 @@ public class UIManager : NetworkBehaviour
 
     private void PlayerConnected(NetworkManager manager, ConnectionEventData data)
     {
+        if (bLogFunctionNames) { Debug.Log("UIManager::PlayerConnected"); }
+        
         Debug.LogFormat("data.EventType: {0}", data.EventType);
         
         if (IsServer)
@@ -83,6 +92,8 @@ public class UIManager : NetworkBehaviour
     // funkcija samo za server jer host zajebava
     private IEnumerator PlayerConnectedServerCoroutine(NetworkManager manager, ConnectionEventData data)
     {
+        if (bLogFunctionNames) { Debug.Log("UIManager::PlayerConnectedServerCoroutine"); }
+        
         if (data.EventType == ConnectionEvent.ClientConnected)
         {
             Debug.LogFormat("Player with ClientId {0} connected", data.ClientId);
@@ -92,7 +103,7 @@ public class UIManager : NetworkBehaviour
             Debug.Log("Server kod");
 
             // posalji listu spriteova
-            GetPlayerInfoRpc(playerInfos.ToArray(), RpcTarget.Single(data.ClientId, RpcTargetUse.Temp));
+            GetPlayerInfoRpc(playerInfosLobby.ToArray(), RpcTarget.Single(data.ClientId, RpcTargetUse.Temp));
 
             // sada cekamo da player postavi sav svoj info i onda syncamo panele svim korisnicima kada primimo info
             yield return new WaitUntil(() => receivedPlayerInfo);
@@ -100,7 +111,7 @@ public class UIManager : NetworkBehaviour
             Debug.Log("Syncanje panela");
             // retardirano syncanje panela, popraviti
             // syncaj panele na klijentskoj strani
-            SyncPanelsRpc(playerInfos.ToArray());
+            SyncPanelsRpc(playerInfosLobby.ToArray());
         }
         else if (data.EventType == ConnectionEvent.ClientDisconnected)
         {
@@ -110,7 +121,7 @@ public class UIManager : NetworkBehaviour
             playersConnected.Value -= 1;
 
             PlayerInfoLobby playerToRemove = new PlayerInfoLobby();
-            foreach (PlayerInfoLobby playerInfo in playerInfos)
+            foreach (PlayerInfoLobby playerInfo in playerInfosLobby)
             {
                 if (playerInfo.ClientId == (int)data.ClientId)
                 {
@@ -118,9 +129,9 @@ public class UIManager : NetworkBehaviour
                 }
             }
 
-            playerInfos.Remove(playerToRemove);
+            playerInfosLobby.Remove(playerToRemove);
 
-            SyncPanelsRpc(playerInfos.ToArray());
+            SyncPanelsRpc(playerInfosLobby.ToArray());
         }
     }
     
@@ -128,6 +139,7 @@ public class UIManager : NetworkBehaviour
     
     private IEnumerator PlayerConnectedClientCoroutine(NetworkManager manager, ConnectionEventData data)
     {
+        if (bLogFunctionNames) { Debug.Log("UIManager::PlayerConnectedClientCoroutine"); }
         
         if (data.EventType == ConnectionEvent.ClientConnected)
         {
@@ -157,7 +169,7 @@ public class UIManager : NetworkBehaviour
                 localPlayerInfo.ClientId = (int)data.ClientId;
                 
                 // iskljuci gunstere koji su vec u lobbyu
-                foreach (PlayerInfoLobby playerInfo in playerInfos)
+                foreach (PlayerInfoLobby playerInfo in playerInfosLobby)
                 {
                     int gunsterId = playerInfo.PlayerGunster;
                     userInfo.transform.Find("CharSelect").Find("Gunster" + gunsterId).GetComponent<Button>().interactable = false;
@@ -195,6 +207,8 @@ public class UIManager : NetworkBehaviour
     [Rpc(SendTo.ClientsAndHost)]
     private void SyncPanelsRpc(PlayerInfoLobby[] serverInfo)
     {
+        if (bLogFunctionNames) { Debug.Log("UIManager::SyncPanelsRpc"); }
+        
         Transform playerPanelList = lobbyScreen.transform.Find("Panel").Find("Players");
         foreach (Transform panel in playerPanelList)
         {
@@ -224,28 +238,38 @@ public class UIManager : NetworkBehaviour
     [Rpc(SendTo.ClientsAndHost)]
     private void StartGameRpc()
     {
+        if (bLogFunctionNames) { Debug.Log("UIManager::StartGameRpc"); }
+        
         lobbyScreen.SetActive(false);
         background.SetActive(false);
+        
+        // sticky testing
+        _gameManager.ReceivePlayerInfo(playerInfosLobby);
+        _gameManager.StartSampleSceneRpc();
     }
     
 
     
-    //spremi informacije u listu na serveru
+    // spremi informacije u listu na serveru
     [Rpc(SendTo.Server)]
     private void SendPlayerInfoRpc(PlayerInfoLobby playerInfo)
     {
-        playerInfos.Add(playerInfo);
+        if (bLogFunctionNames) { Debug.Log("UIManager::SendPlayerInfoRpc"); }
+        
+        playerInfosLobby.Add(playerInfo);
         receivedPlayerInfo = true;
         
     }
     
     
     
-    //dohvati serverove informacije o igracima
+    // dohvati serverove informacije o igracima
     [Rpc(SendTo.SpecifiedInParams)]
-    private void GetPlayerInfoRpc(PlayerInfoLobby[] playerInfoSent ,RpcParams rpcParams = default)
+    private void GetPlayerInfoRpc(PlayerInfoLobby[] playerInfoSent, RpcParams rpcParams = default)
     {
-        playerInfos = playerInfoSent.ToList();
+        if (bLogFunctionNames) { Debug.Log("UIManager::GetPlayerInfoRpc"); }
+        
+        playerInfosLobby = playerInfoSent.ToList();
         receivedRpc = true;
     }
     
@@ -254,6 +278,8 @@ public class UIManager : NetworkBehaviour
     // updateaj panel s brojem spremnih igraca
     public void UpdateReadyNumber(int prevValue, int newValue)
     {
+        if (bLogFunctionNames) { Debug.Log("UIManager::UpdateReadyNumber"); }
+        
         Debug.Log("Number of players: " + newValue);
         lobbyScreen.transform.Find("Panel").Find("Ready").GetComponent<TMP_Text>().text = newValue + "/4";
     }
@@ -262,7 +288,7 @@ public class UIManager : NetworkBehaviour
 
     public void HostButton()
     {
-        Debug.Log("UIManager::HostButton");
+        if (bLogFunctionNames) { Debug.Log("UIManager::HostButton"); }
         
         // Procitaj IP i port i napravi server
         Transform hostButton = HostJoin.transform.Find("Host");
@@ -284,6 +310,8 @@ public class UIManager : NetworkBehaviour
     
     public void JoinButton()
     {
+        if (bLogFunctionNames) { Debug.Log("UIManager::JoinButton"); }
+        
         // procitaj IP i port i napravi klijenta -> ako ne postoji server onda izbaci error
         Transform joinButton = HostJoin.transform.Find("Join");
         TMP_InputField IPfield = joinButton.Find("IP").GetComponent<TMP_InputField>();
@@ -304,6 +332,8 @@ public class UIManager : NetworkBehaviour
     
     public void StartGameButton()
     {
+        if (bLogFunctionNames) { Debug.Log("UIManager::StartGameButton"); }
+        
         if (!IsServer)
         {
             Debug.Log("Only the host can start the game!");
@@ -318,6 +348,8 @@ public class UIManager : NetworkBehaviour
     
     public void ExitLobby()
     {
+        if (bLogFunctionNames) { Debug.Log("UIManager::ExitLobby"); }
+        
         // ugasi lobby i ukljuci lobby creation/join screen
         _networkManager.Shutdown();
         HostJoin.SetActive(true);
@@ -328,6 +360,8 @@ public class UIManager : NetworkBehaviour
     
     public void ExitButton()
     {
+        if (bLogFunctionNames) { Debug.Log("UIManager::ExitButton"); }
+        
         //izadi iz igre
         //EditorApplication.ExitPlaymode();
         Application.Quit();
@@ -341,6 +375,8 @@ public class UIManager : NetworkBehaviour
 
     public void ToggleCharacterSelect()
     {
+        if (bLogFunctionNames) { Debug.Log("UIManager::ToggleCharacterSelect"); }
+        
         GameObject charSelect = userInfo.transform.Find("CharSelect").gameObject;
         charSelect.SetActive(!charSelect.activeSelf);
     }
@@ -349,6 +385,7 @@ public class UIManager : NetworkBehaviour
 
     public void SelectGunsterAndName(int gunster)
     {
+        if (bLogFunctionNames) { Debug.Log("UIManager::SelectGunsterAndName"); }
         
         localPlayerInfo.PlayerName = userInfo.transform.Find("Name").GetComponent<TMP_InputField>().text;
         if (localPlayerInfo.PlayerName == "")

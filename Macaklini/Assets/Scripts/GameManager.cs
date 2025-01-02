@@ -9,6 +9,8 @@ using UnityEngine.SceneManagement;
 // skripta za pracenje i syncanje statea igre, ko je pobjedio runde, kada treba zavrsit i tako
 public class GameManager : NetworkBehaviour
 {
+    private bool bLogFunctionNames = true;
+    
     // moguca stanja runde
     public enum RoundState 
     {
@@ -33,12 +35,15 @@ public class GameManager : NetworkBehaviour
     private int roundNumber;
     private List<Transform> playerScorecards = new List<Transform>();
     private TMP_Text readyText;
+    private Camera mainCamera;
     
     
     
     // Start is called before the first frame update
     void Start()
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::Start"); }
+        
         // ako vec postoji GameManager instanca, unisti ovu
         int instances = FindObjectsOfType<GameManager>().Length;
         if (instances > 1) // promijenjeno u > umjesto != jer kaj ak se istovremeno spawnaju 2 instance
@@ -55,6 +60,7 @@ public class GameManager : NetworkBehaviour
         scoreboard = _uiManager.transform.Find("Scoreboard").gameObject;
         roundNumber = 0;
         roundState = RoundState.RoundEnding;
+        mainCamera = Camera.main; // this is done to avoid a small CPU overhead at every call of Camera.main
 
         foreach (Transform playerScorecard in scoreboard.transform.Find("Players"))
         {
@@ -102,6 +108,10 @@ public class GameManager : NetworkBehaviour
 
     void StartRoundServer(Scene scena, LoadSceneMode loadMode)
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::StartRoundServer"); }
+        
+        Debug.LogFormat("we have loaded the scene: {0}", scena.name);
+
         // Server only
         if (!IsServer || roundState != RoundState.RoundEnding)
         {
@@ -121,6 +131,8 @@ public class GameManager : NetworkBehaviour
     [Rpc(SendTo.ClientsAndHost)]
     void StartRoundClientsRpc()
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::StartRoundClientsRpc"); }
+        
         StartCoroutine(ReadyCountdown());
     }
     
@@ -128,6 +140,8 @@ public class GameManager : NetworkBehaviour
     
     IEnumerator ReadyCountdown()
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::ReadyCountdown"); }
+        
         // pronadi kojeg igraca posjedujem
         roundState = RoundState.RoundInProgress;
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
@@ -143,7 +157,6 @@ public class GameManager : NetworkBehaviour
         }
 
         // zumiraj kameru na igraca i postavi poziciju na njega
-        Camera mainCamera = Camera.main; // this is done to avoid a small CPU overhead at every call of Camera.main
         if (mainCamera)
         {
             mainCamera.orthographicSize = 1;
@@ -175,6 +188,8 @@ public class GameManager : NetworkBehaviour
     
     public void CheckForEndOfRound()
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::CheckForEndOfRound"); }
+        
         // Server only
         if (!IsServer)
         {
@@ -216,6 +231,8 @@ public class GameManager : NetworkBehaviour
     
     void EndRoundServer(PlayerInfoGame roundWinner)
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::EndRoundServer"); }
+
         // Server only method
         if (!IsServer)
         {
@@ -232,7 +249,7 @@ public class GameManager : NetworkBehaviour
         else
         {
             // netko je ipak pobijedio
-            WinRound(roundWinner.ClientId);
+            WinRoundServer(roundWinner.ClientId);
         }
     }
 
@@ -241,6 +258,8 @@ public class GameManager : NetworkBehaviour
     [Rpc(SendTo.ClientsAndHost)]
     void EndRoundClientsRpc()
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::EndRoundClientsRpc"); }
+
         StartCoroutine(EndRoundCoroutine());
     }
     
@@ -248,6 +267,8 @@ public class GameManager : NetworkBehaviour
     
     IEnumerator EndRoundCoroutine()
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::EndRoundCoroutine"); }
+
         roundState = RoundState.RoundEnding;
         yield return new WaitForSeconds(5f);
         string currentLevel = SceneManager.GetActiveScene().name;
@@ -261,8 +282,10 @@ public class GameManager : NetworkBehaviour
 
     
     
-    void EndGame(PlayerInfoGame winner)
+    void EndGameServer(PlayerInfoGame winner)
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::EndGameServer"); }
+
         if (!IsServer)
         {
             return;
@@ -278,6 +301,8 @@ public class GameManager : NetworkBehaviour
     [Rpc(SendTo.ClientsAndHost)]
     void EndGameClientsRpc()
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::EndGameClientsRpc"); }
+        
         roundState = RoundState.GameEnding;
         // natrag u lobby
         // ui.LobbyAfterGame();
@@ -288,6 +313,8 @@ public class GameManager : NetworkBehaviour
 
     void ToggleScoreboard()
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::ToggleScoreboard"); }
+
         scoreboard.SetActive(!scoreboard.activeSelf);
     }
 
@@ -296,6 +323,8 @@ public class GameManager : NetworkBehaviour
     [Rpc(SendTo.ClientsAndHost)]
     private void UpdateScoreBoardRpc(PlayerInfoGame[] playerInfoGames)
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::UpdateScoreBoardRpc"); }
+
         UpdateScoreBoard(playerInfoGames.ToList());
     }
     
@@ -304,6 +333,8 @@ public class GameManager : NetworkBehaviour
     [Rpc(SendTo.ClientsAndHost)]
     private void LoadSceneRpc(string sceneName)
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::LoadSceneRpc"); }
+
         SceneManager.LoadSceneAsync(sceneName);
     }
 
@@ -311,6 +342,8 @@ public class GameManager : NetworkBehaviour
     
     void UpdateScoreBoard(List<PlayerInfoGame> playerInfoGames)
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::UpdateScoreBoard"); }
+        
         // za svakog igraca ispuni podatke u scoreboardu
         // ispuni i donji panel sa informacija o levelu i rundi
 
@@ -339,15 +372,16 @@ public class GameManager : NetworkBehaviour
 
 
 
-    void WinRound(int winnerClientId)
+    void WinRoundServer(int winnerClientId)
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::WinRoundServer"); }
+
         // Server only
         if (!IsServer)
         {
             return;
         }
-
-
+        
         foreach (PlayerInfoGame player in playerInfosGame)
         {
             if (player.ClientId == winnerClientId)
@@ -356,7 +390,7 @@ public class GameManager : NetworkBehaviour
                 if (player.RoundsWon >= gamesNeededToWin)
                 {
                     roundState = RoundState.GameEnding;
-                    EndGame(player);
+                    EndGameServer(player);
                     return;
                 }
             }
@@ -367,8 +401,12 @@ public class GameManager : NetworkBehaviour
         EndRoundClientsRpc();
     }
 
+    
+    
     void AddDeath(int clientId)
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::AddDeath"); }
+
         // Server only
         if (!IsServer)
         {
@@ -387,8 +425,12 @@ public class GameManager : NetworkBehaviour
         UpdateScoreBoardRpc(playerInfosGame.ToArray());
     }
 
+    
+    
     IEnumerator AfterDeathCheck()
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::AfterDeathCheck"); }
+
         yield return new WaitForSeconds(1.0f);
 
         if (roundState == RoundState.RoundInProgress)
@@ -403,6 +445,8 @@ public class GameManager : NetworkBehaviour
     
     void AddKill(int clientId)
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::AddKill"); }
+
         // Server only
         if (!IsServer)
         {
@@ -425,13 +469,15 @@ public class GameManager : NetworkBehaviour
     // prikazi igracima scoreove i koliko treba do pobjede
     void Intermission()
     {
-
+        if (bLogFunctionNames) { Debug.Log("GameManager::Intermission"); }
     }
 
     
     
     public void ReceivePlayerInfo(List<PlayerInfoLobby> playerInfos)
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::ReceivePlayerInfo"); }
+
         // Server only
         if (!IsServer)
         {
@@ -458,20 +504,53 @@ public class GameManager : NetworkBehaviour
 
         // pocni rundu
         // rollaj random level
-        int index = Random.Range(0, LevelsToLoad.Count);
-        LoadSceneRpc(LevelsToLoad[index]);
+        // int index = Random.Range(0, LevelsToLoad.Count);
+        // LoadSceneRpc(LevelsToLoad[index]);
     }
 
     
     
     void InstancePlayers()
     {
+        if (bLogFunctionNames) { Debug.Log("GameManager::InstancePlayers"); }
+
+        Debug.Log("playerInfosGame count: " + playerInfosGame.Count);
+        Debug.Log("playerInfosGame:");
         foreach(PlayerInfoGame currentPlayer in playerInfosGame)
         {
+            Debug.LogFormat("ID: {0}, name: {1}, gunster: {2}", currentPlayer.ClientId, currentPlayer.PlayerName, currentPlayer.PlayerGunster);
             GameObject playerInstance = Instantiate(playerPrefab);
             playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject((ulong)currentPlayer.ClientId);
             playerInstance.GetComponent<SpriteRenderer>().sprite = _uiManager.GUNsterSpriteovi[currentPlayer.PlayerGunster];
             currentPlayer.PlayerController = playerInstance.GetComponent<PlayerController>();
         }
+    }
+    
+    
+    
+    [Rpc(SendTo.ClientsAndHost)]
+    public void StartSampleSceneRpc()
+    {
+        if (bLogFunctionNames) { Debug.Log("GameManager::StartSampleSceneRpc"); }
+
+        StartCoroutine(LoadSampleScene());
+    }
+    
+    public IEnumerator LoadSampleScene()
+    {
+        if (bLogFunctionNames) { Debug.Log("GameManager::LoadSampleScene"); }
+
+        yield return new WaitForSeconds(1f);
+        string currentLevel = SceneManager.GetActiveScene().name;
+
+        // rollaj random level osim trenutnog
+        List<string> levelsToChooseFrom = LevelsToLoad.Where(level => level != currentLevel).ToList();
+        Debug.Log("Levels to choose from:");
+        foreach (string levelName in levelsToChooseFrom)
+        {
+            Debug.LogFormat("level: {0}", levelName);
+        }
+        //int index = Random.Range(0, levelsToChooseFrom.Count);
+        LoadSceneRpc("SampleScene");
     }
 }
