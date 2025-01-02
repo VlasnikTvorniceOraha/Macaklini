@@ -8,6 +8,8 @@ public class PlayerController : NetworkBehaviour
     public Transform groundCheck;
     public LayerMask groundLayer;
     public NetworkVariable<bool> isAlive = new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public float MovementSpeed; // originalno 200 u prefabu
+    public float JumpForce; // originalno 600 u prefabu
     
     private NetworkManager _networkManager;
     private UnityTransport _unityTransport;
@@ -17,13 +19,18 @@ public class PlayerController : NetworkBehaviour
     private GameManager _gameManager;
     
     // movement variables
-    public float MovementSpeed = 1f;
-    public float JumpForce = 20f;
     private float horizontalInput;
     private float verticalInput;
     private bool shouldJump;
+    private bool isGroundedLeft;
+    private bool isGroundedRight;
     private bool isGrounded;
     private Vector2 _jumpDirection = Vector2.up;
+    private int _updatesSinceLastGrounded;
+    
+    // not grounded at the edge of a platform fix
+    private Vector2 _bottomLeftCorner;
+    private Vector2 _bottomRightCorner;
 
     
     
@@ -78,6 +85,7 @@ public class PlayerController : NetworkBehaviour
     
     void CheckForMovementInput()
     {
+        // horizontal movement
         horizontalInput = Input.GetAxisRaw("Horizontal");
         if (horizontalInput < 0)
         {
@@ -88,16 +96,46 @@ public class PlayerController : NetworkBehaviour
             _spriteRenderer.flipX = true;
         }
         
+        // vertical movement
         verticalInput = Input.GetAxisRaw("Vertical");
 
-        isGrounded = Physics2D.Raycast(groundCheck.position, Vector2.down, 1, groundLayer);
+        // jumping
+        _bottomLeftCorner = new Vector2(-gameObject.GetComponent<BoxCollider2D>().size.x / 2 + gameObject.transform.position.x, 
+            -gameObject.GetComponent<BoxCollider2D>().size.y / 2 + gameObject.transform.position.y);
+        _bottomRightCorner = new Vector2(gameObject.GetComponent<BoxCollider2D>().size.x / 2 + gameObject.transform.position.x, 
+            -gameObject.GetComponent<BoxCollider2D>().size.y / 2 + gameObject.transform.position.y);
+        isGroundedLeft = Physics2D.Raycast(_bottomLeftCorner, Vector2.down, 1, groundLayer);
+        isGroundedRight = Physics2D.Raycast(_bottomRightCorner, Vector2.down, 1, groundLayer);
+        isGrounded = isGroundedLeft || isGroundedRight;
+        if (isGrounded)
+        {
+            _updatesSinceLastGrounded = 0;
+        }
+        // this is done to avoid jittering with collider switching between grounded and not grounded between calls
+        // tldr: disable jump fatigue
+        else if (_updatesSinceLastGrounded < 3)
+        {
+            isGrounded = true;
+            _updatesSinceLastGrounded++;
+        }
+        
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            // shouldJump = true;
+            if (isGrounded && _updatesSinceLastGrounded < 3)
+            {
+                shouldJump = true;
+            }
+            else
+            {
+                shouldJump = false;
+            }
+        }
+        
+        // debug logging
         if (Input.GetKey(KeyCode.L))
         {
             Debug.LogFormat("isGrounded: {0}", isGrounded);
-        }
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
-        {
-            shouldJump = true;
         }
     }
 
@@ -105,7 +143,6 @@ public class PlayerController : NetworkBehaviour
     
     void Jump()
     {
-        Debug.Log("JUMP");
         _rb2d.AddForce(_jumpDirection * JumpForce, ForceMode2D.Force);
         _jumpDirection = Vector2.up;
         _rb2d.gravityScale = 1.5f;
@@ -120,13 +157,13 @@ public class PlayerController : NetworkBehaviour
         isAlive.Value = true;
         isAlive.OnValueChanged += CheckForEndOfRoundAfterPlayerDeath;
 
-        // if you are the owner and the host, set the player to spawnPoint1 and rename the player to "Host"
+        // if you are the owner and the host, set the player to spawnPoint1
         if (IsOwner && IsHost)
         {
             transform.SetPositionAndRotation(SpawnLocations.SampleSceneSpawnLocations[0], new Quaternion());
             //playerName.Value = "Host";
         }
-        // if you are the owner and the client, set the player to spawnPoint2 and rename the player to "Client"
+        // if you are the owner and the client, set the player to spawnPoint2
         else if (IsOwner && IsClient)
         {
             transform.SetPositionAndRotation(SpawnLocations.SampleSceneSpawnLocations[1], new Quaternion());
@@ -140,7 +177,7 @@ public class PlayerController : NetworkBehaviour
     {
         if (newValue == false)
         {
-            //igrac je umro
+            // igrac je umro
             _gameManager.CheckForEndOfRound();
         }
     }
@@ -154,10 +191,8 @@ public class PlayerController : NetworkBehaviour
             return;
         }
         
-        //isGrounded = true;
-        //_rb2d.gravityScale = 0f;
-        
         // vector start is player, vector end is the sticky wall which the player has collided with
+        // cumulatedContactDirection because there can be multiple contact points on collision because of BoxCollider2D
         Vector2 cumulatedContactDirection = new Vector2(); 
         foreach (var contact in other.contacts)
         {

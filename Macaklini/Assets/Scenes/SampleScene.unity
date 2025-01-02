@@ -1468,7 +1468,7 @@ GameObject:
   - component: {fileID: 1275664465}
   - component: {fileID: 1275664467}
   - component: {fileID: 1275664466}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: MiddleWall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
