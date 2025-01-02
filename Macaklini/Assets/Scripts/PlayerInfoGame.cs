@@ -1,6 +1,6 @@
 using Unity.Netcode;
 
-//struktura za pracenje varijabli kad su igraci in game
+// struktura za pracenje varijabli kad su igraci in game
 public class PlayerInfoGame : INetworkSerializable
 {
     public int ClientId;

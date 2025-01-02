@@ -7,7 +7,6 @@ public class PlayerController : NetworkBehaviour
 {
     public Transform groundCheck;
     public LayerMask groundLayer;
-    
     public NetworkVariable<bool> isAlive = new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     
     private NetworkManager _networkManager;

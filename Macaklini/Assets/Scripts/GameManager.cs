@@ -34,6 +34,8 @@ public class GameManager : NetworkBehaviour
     private List<Transform> playerScorecards = new List<Transform>();
     private TMP_Text readyText;
     
+    
+    
     // Start is called before the first frame update
     void Start()
     {
