@@ -1,7 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Netcode;
-using UnityEngine;
 
 public class PlayerInfoLobby : INetworkSerializable
 {
@@ -16,5 +13,7 @@ public class PlayerInfoLobby : INetworkSerializable
         serializer.SerializeValue(ref PlayerName);
         serializer.SerializeValue(ref PlayerGunster);
     }
+    
     // ~INetworkSerializable
+    
 }

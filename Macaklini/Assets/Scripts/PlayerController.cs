@@ -2,44 +2,45 @@ using System;
 using UnityEngine;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
-using Unity.Networking.Transport;
 
 public class PlayerController : NetworkBehaviour
 {
+    public Transform groundCheck;
+    public LayerMask groundLayer;
+    
+    public NetworkVariable<bool> isAlive = new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    
     private NetworkManager _networkManager;
     private UnityTransport _unityTransport;
     private UIManager _uiManager;
     private Rigidbody2D _rb2d;
     private SpriteRenderer _spriteRenderer;
     private GameManager _gameManager;
-
-    public Transform groundCheck;
-    public LayerMask groundLayer;
     
     // movement variables
     public float MovementSpeed = 1f;
     public float JumpForce = 20f;
     private float horizontalInput;
     private float verticalInput;
-    private bool shouldJump = false;
+    private bool shouldJump;
     private bool isGrounded;
     private Vector2 _jumpDirection = Vector2.up;
 
-    public NetworkVariable<bool> isAlive = new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    
     
     void Start()
     {
         _networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
         _unityTransport = _networkManager.gameObject.GetComponent<UnityTransport>();
         _uiManager = GameObject.Find("UI").GetComponent<UIManager>();
-        _rb2d = this.GetComponent<Rigidbody2D>();
+        _rb2d = GetComponent<Rigidbody2D>();
         _rb2d.bodyType = RigidbodyType2D.Dynamic;
-        _spriteRenderer = this.GetComponent<SpriteRenderer>();
+        _spriteRenderer = GetComponent<SpriteRenderer>();
         _gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
-        
-
     }
 
+    
+    
     // Update is called once per frame
     void Update()
     {
@@ -49,6 +50,8 @@ public class PlayerController : NetworkBehaviour
             CheckForMovementInput();
         }
     }
+    
+    
     
     void FixedUpdate() 
     {
@@ -72,6 +75,8 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    
+    
     void CheckForMovementInput()
     {
         horizontalInput = Input.GetAxisRaw("Horizontal");
@@ -97,6 +102,8 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    
+    
     void Jump()
     {
         Debug.Log("JUMP");
@@ -104,13 +111,15 @@ public class PlayerController : NetworkBehaviour
         _jumpDirection = Vector2.up;
         _rb2d.gravityScale = 1.5f;
     }
+    
+    
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
         Debug.Log("Spawnan igrac");
         isAlive.Value = true;
-        isAlive.OnValueChanged += checkForEndOfRoundAfterPlayerDeath;
+        isAlive.OnValueChanged += CheckForEndOfRoundAfterPlayerDeath;
 
         // if you are the owner and the host, set the player to spawnPoint1 and rename the player to "Host"
         if (IsOwner && IsHost)
@@ -125,8 +134,10 @@ public class PlayerController : NetworkBehaviour
             //playerName.Value = "Client";
         }
     }
+    
+    
 
-    void checkForEndOfRoundAfterPlayerDeath(bool prevValue, bool newValue)
+    void CheckForEndOfRoundAfterPlayerDeath(bool prevValue, bool newValue)
     {
         if (newValue == false)
         {
@@ -134,6 +145,8 @@ public class PlayerController : NetworkBehaviour
             _gameManager.CheckForEndOfRound();
         }
     }
+    
+    
     
     public void OnCollisionEnter2D(Collision2D other)
     {
@@ -185,6 +198,8 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    
+    
     public void OnCollisionExit2D(Collision2D other)
     {
         return;

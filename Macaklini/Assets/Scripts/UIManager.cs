@@ -2,69 +2,47 @@ using UnityEngine;
 using TMPro;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
-using UnityEditor;
 using System.Collections.Generic;
-using Microsoft.Unity.VisualStudio.Editor;
-using Unity.Services.Authentication;
 using System.Linq;
 using System.Collections;
 using UnityEngine.UI;
 
 public class UIManager : NetworkBehaviour
 {
-    // Start is called before the first frame update
+    [SerializeField] public List<Sprite> GUNsterSpriteovi = new List<Sprite>();
+    
+    public NetworkVariable<bool> gameStarted = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    
+    [SerializeField] private GameObject HostJoin; // UI screen for server creation/joining
+    [SerializeField] private GameObject lobbyScreen; // UI screen that shows up after entering a lobby
+    [SerializeField] private GameObject PlayerPanel; // player info that shows up when a player enters a lobby
+    [SerializeField] private GameObject background; // UI background color
+    [SerializeField] private GameObject userInfo; // UserInfo panel
+    [SerializeField] private NetworkVariable<int> playersConnected = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     private NetworkManager _networkManager;
     private UnityTransport _unityTransport;
-    // UI screen for server creation/joining
-    [SerializeField] private GameObject HostJoin;
-    // UI screen that shows up after entering a lobby
-    [SerializeField] private GameObject lobbyScreen;
-    // player info that shows up when a player enters a lobby
-    [SerializeField] private GameObject PlayerPanel;
-    // UI background color
-    [SerializeField] private GameObject background;
-    // UserInfo panel
-    [SerializeField] private GameObject userInfo;
-
-    [SerializeField] private GameObject scoreBoard;
-
-    public List<Sprite> GUNsterSpriteovi = new List<Sprite>();
-    //lista imena i gunstera za svakog igraca u lobbyu, spremljena na serveru
-    private List<PlayerInfoLobby> playerInfos = new List<PlayerInfoLobby>();
-
-    private GameManager gameManager;
-
-    //play info klijenta
-    private PlayerInfoLobby localPlayerInfo = new PlayerInfoLobby();
+    private List<PlayerInfoLobby> playerInfos = new List<PlayerInfoLobby>(); // lista imena i gunstera za svakog igraca u lobbyu, spremljena na serveru 
+    private PlayerInfoLobby localPlayerInfo = new PlayerInfoLobby(); // play info klijenta
     
-    [SerializeField] private NetworkVariable<int> playersConnected = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    public NetworkVariable<bool> gameStarted = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-
-    bool receivedRpc = false;
-    bool receivedPlayerInfo = false;
-    bool pickedGunster = false;
+    private bool receivedRpc = false;
+    private bool receivedPlayerInfo = false;
+    private bool pickedGunster = false;
     
+    
+    
+    // Start is called before the first frame update
     void Start()
     {
-        //provjeri je li vec postoji gamemangaer instanca i ako da ubi se
-        int instances = FindObjectsOfType<UIManager>().Length;
-        if (instances != 1)
-        {
-            //upucaj se
-            Destroy(this.gameObject);
-            return;
-        }
         _networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
         _unityTransport = _networkManager.gameObject.GetComponent<UnityTransport>();
         _networkManager.OnConnectionEvent += PlayerConnected;
-
-        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
-
-        DontDestroyOnLoad(this.gameObject);
         
         // callback da se poveca broj u lobbyu
-        playersConnected.OnValueChanged += updateReadyNumber;
+        playersConnected.OnValueChanged += UpdateReadyNumber;
     }
+    
+    
 
     // Update is called once per frame
     void Update()
@@ -75,18 +53,20 @@ public class UIManager : NetworkBehaviour
             Debug.LogFormat("playersConnected.Value: {0}", playersConnected.Value);
             Debug.LogFormat("gameStarted.Value: {0}", gameStarted.Value);
             Debug.LogFormat("playerinfos.count: {0}", playerInfos.Count);
+            
             foreach (PlayerInfoLobby player in playerInfos)
             {
-                Debug.Log("Id: " + player.ClientId);
-                Debug.Log("Name: " + player.PlayerName);
-                Debug.Log("Gunster: " + player.PlayerGunster);
+                Debug.Log("Id: " + player.ClientId + ", name: " + player.PlayerName + ", gunster: " + player.PlayerGunster);
             }
         }
     }
+    
+    
 
     private void PlayerConnected(NetworkManager manager, ConnectionEventData data)
     {
         Debug.LogFormat("data.EventType: {0}", data.EventType);
+        
         if (IsServer)
         {
             StartCoroutine(PlayerConnectedServerCoroutine(manager, data));
@@ -97,35 +77,35 @@ public class UIManager : NetworkBehaviour
         }
         
     }
+    
+    
 
-    //funkcija samo za server jer host zajebava
+    // funkcija samo za server jer host zajebava
     private IEnumerator PlayerConnectedServerCoroutine(NetworkManager manager, ConnectionEventData data)
     {
         if (data.EventType == ConnectionEvent.ClientConnected)
         {
-            
             Debug.LogFormat("Player with ClientId {0} connected", data.ClientId);
-            //server treba povecati playerconnected value i poslati igracu listu spriteova u lobbyu te syncati panele
-            
-            
+         
+            //server treba povecati playersConnected value, poslati igracu listu spriteova u lobbyu te syncati panele
             playersConnected.Value += 1;
             Debug.Log("Server kod");
 
-            //posalji listu spriteova
+            // posalji listu spriteova
             GetPlayerInfoRpc(playerInfos.ToArray(), RpcTarget.Single(data.ClientId, RpcTargetUse.Temp));
 
-            //sada cekamo da player postavi sav svoj info i onda syncamo panele svim korisnicima kada primimo info
+            // sada cekamo da player postavi sav svoj info i onda syncamo panele svim korisnicima kada primimo info
             yield return new WaitUntil(() => receivedPlayerInfo);
             receivedPlayerInfo = false;
             Debug.Log("Syncanje panela");
-            //retardirano syncanje panela, popraviti
+            // retardirano syncanje panela, popraviti
             // syncaj panele na klijentskoj strani
             SyncPanelsRpc(playerInfos.ToArray());
         }
         else if (data.EventType == ConnectionEvent.ClientDisconnected)
         {
-            //treba izbaciti klijenta iz liste server infoa i syncati panele ponovno AKO su u lobiju
-            //klijent se disconnectao, smanji broj spojenih i tako
+            // treba izbaciti klijenta iz liste server infoa i syncati panele ponovno AKO su u lobiju
+            // klijent se disconnectao, smanji broj spojenih i tako
             
             playersConnected.Value -= 1;
 
@@ -141,18 +121,17 @@ public class UIManager : NetworkBehaviour
             playerInfos.Remove(playerToRemove);
 
             SyncPanelsRpc(playerInfos.ToArray());
-
-            //posalji ovo gameManageru da makne tog igraca sljedecu rundu
         }
     }
+    
+    
     
     private IEnumerator PlayerConnectedClientCoroutine(NetworkManager manager, ConnectionEventData data)
     {
         
         if (data.EventType == ConnectionEvent.ClientConnected)
         {
-            //ako si igrac koji se spojio treba otvoriti skrin za biranje imena i gunstera i poslati to serveru
-            
+            //ako si igrac koji se spojio treba otvoriti screen za biranje imena i gunstera i poslati to serveru
             if (_networkManager.LocalClientId == data.ClientId)
             {
                 // ako ima vise od 4, disconnectaj
@@ -162,36 +141,41 @@ public class UIManager : NetworkBehaviour
                     _networkManager.Shutdown();
                     yield break;
                 }
-                Debug.Log("Klijent kod");
+                
                 // klijent se spojio, syncaj ga
                 HostJoin.SetActive(false);
-                //pricekaj dok se bool ne promijeni sto znaci da je klijent sigurno dobio poruku
+                
+                // pricekaj dok se bool ne promijeni sto znaci da je klijent sigurno dobio poruku
                 yield return new WaitUntil(() => receivedRpc);
                 receivedRpc = false;
-                //dohvati listu odabranih spriteova od igraca u lobbyu
-                Debug.Log("Klijent je dobio spritove");
-                //korisnik mora odabrati ime i gunstera
+                
+                // dohvati listu odabranih spriteova od igraca u lobbyu
+                Debug.Log("Klijent je dobio spriteove");
+                
+                // korisnik mora odabrati ime i gunstera
                 userInfo.SetActive(true);
                 localPlayerInfo.ClientId = (int)data.ClientId;
-                //iskljuci gunstere koji su vec u lobbyu
+                
+                // iskljuci gunstere koji su vec u lobbyu
                 foreach (PlayerInfoLobby playerInfo in playerInfos)
                 {
                     int gunsterId = playerInfo.PlayerGunster;
                     userInfo.transform.Find("CharSelect").Find("Gunster" + gunsterId).GetComponent<Button>().interactable = false;
                 }
 
-                //cekaj dok ne klikne gunstera
+                // cekaj dok ne klikne gunstera
                 yield return new WaitUntil(() => pickedGunster);
                 pickedGunster = false;
                 Debug.Log("Klijent odabrao gunstera i ime");
                 userInfo.SetActive(false);
                 lobbyScreen.SetActive(true);
-                //Sad imamo ispunjeni playerinfo, posalji serveru i klijent je gotov
+                
+                // sad imamo ispunjeni playerinfo, posalji serveru i klijent je gotov
                 SendPlayerInfoRpc(localPlayerInfo);
             }
             else if (IsClient)
             {
-                //kod za ostale klijente ako je potreban, nebi trebao biti
+                // kod za ostale klijente ako je potreban, ne bi trebao biti
                 Debug.Log("Javlja se klijent " + _networkManager.LocalClientId);
             }
 
@@ -202,9 +186,10 @@ public class UIManager : NetworkBehaviour
             {
                 //resetaj na main menu il nes idk neki handling logic
             }
-            
         }
     }
+    
+    
 
     // RPC za syncanje panela na svim klijentima
     [Rpc(SendTo.ClientsAndHost)]
@@ -215,22 +200,25 @@ public class UIManager : NetworkBehaviour
         {
             panel.gameObject.SetActive(false);
         }
-        //server ce poslati info i svaki klijent i host ce si postaviti panele
+        
+        // server ce poslati info i svaki klijent i host ce si postaviti panele
         int brojac = 0;
         foreach (PlayerInfoLobby playerInfo in serverInfo)
         {
-            //paneli se uvijek aktiviraju po redu ovisno o kako je server spremio info
+            // paneli se uvijek aktiviraju po redu ovisno o kako je server spremio info
             GameObject panel = playerPanelList.GetChild(brojac).gameObject;
             brojac++;
             panel.SetActive(true);
             panel.transform.Find("Ime").GetComponent<TMP_Text>().text = playerInfo.PlayerName;
             panel.transform.Find("Status").GetComponent<TMP_Text>().text = "Connected with id: " + playerInfo.ClientId;
-            panel.transform.Find("Slika").GetComponent<UnityEngine.UI.Image>().sprite = GUNsterSpriteovi[playerInfo.PlayerGunster];
+            panel.transform.Find("Slika").GetComponent<Image>().sprite = GUNsterSpriteovi[playerInfo.PlayerGunster];
 
         }
 
         // todo: imena kasnije isto ig
     }
+    
+    
 
     // zapocni igru i osposobi kretanje svim igracima
     [Rpc(SendTo.ClientsAndHost)]
@@ -238,10 +226,10 @@ public class UIManager : NetworkBehaviour
     {
         lobbyScreen.SetActive(false);
         background.SetActive(false);
-        gameManager.roundState = GameManager.RoundState.RoundEnding;
     }
     
 
+    
     //spremi informacije u listu na serveru
     [Rpc(SendTo.Server)]
     private void SendPlayerInfoRpc(PlayerInfoLobby playerInfo)
@@ -250,6 +238,9 @@ public class UIManager : NetworkBehaviour
         receivedPlayerInfo = true;
         
     }
+    
+    
+    
     //dohvati serverove informacije o igracima
     [Rpc(SendTo.SpecifiedInParams)]
     private void GetPlayerInfoRpc(PlayerInfoLobby[] playerInfoSent ,RpcParams rpcParams = default)
@@ -257,12 +248,17 @@ public class UIManager : NetworkBehaviour
         playerInfos = playerInfoSent.ToList();
         receivedRpc = true;
     }
+    
+    
+    
     // updateaj panel s brojem spremnih igraca
-    public void updateReadyNumber(int prevValue, int newValue)
+    public void UpdateReadyNumber(int prevValue, int newValue)
     {
         Debug.Log("Number of players: " + newValue);
         lobbyScreen.transform.Find("Panel").Find("Ready").GetComponent<TMP_Text>().text = newValue + "/4";
     }
+    
+    
 
     public void HostButton()
     {
@@ -284,6 +280,8 @@ public class UIManager : NetworkBehaviour
         _networkManager.StartHost();
     }
 
+    
+    
     public void JoinButton()
     {
         // procitaj IP i port i napravi klijenta -> ako ne postoji server onda izbaci error
@@ -302,6 +300,8 @@ public class UIManager : NetworkBehaviour
         _networkManager.StartClient();
     }
 
+    
+    
     public void StartGameButton()
     {
         if (!IsServer)
@@ -311,10 +311,11 @@ public class UIManager : NetworkBehaviour
         }
 
         gameStarted.Value = true;
-        gameManager.ReceivePlayerInfo(playerInfos);
         StartGameRpc();
     }
 
+    
+    
     public void ExitLobby()
     {
         // ugasi lobby i ukljuci lobby creation/join screen
@@ -323,6 +324,8 @@ public class UIManager : NetworkBehaviour
         lobbyScreen.SetActive(false);
     }
     
+    
+    
     public void ExitButton()
     {
         //izadi iz igre
@@ -330,12 +333,19 @@ public class UIManager : NetworkBehaviour
         Application.Quit();
     }
 
+    
+    
+    // User info i PlayerPrefs
+
+
 
     public void ToggleCharacterSelect()
     {
         GameObject charSelect = userInfo.transform.Find("CharSelect").gameObject;
         charSelect.SetActive(!charSelect.activeSelf);
     }
+    
+    
 
     public void SelectGunsterAndName(int gunster)
     {
@@ -347,17 +357,5 @@ public class UIManager : NetworkBehaviour
         }
         localPlayerInfo.PlayerGunster = gunster;
         pickedGunster = true;
-    }
-
-    public void LobbyAfterGame()
-    {
-        //mozda neka kruna za pobjednika?
-        //igraci su vec odigrali rundu i vraca ih se na mainmenu scenu tj u lobby
-        userInfo.SetActive(false);
-        HostJoin.SetActive(false);
-        lobbyScreen.SetActive(true);
-        gameStarted.Value = false;
-        SyncPanelsRpc(playerInfos.ToArray());
-
     }
 }
