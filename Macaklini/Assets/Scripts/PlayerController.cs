@@ -1,47 +1,212 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 
 public class PlayerController : NetworkBehaviour
 {
-    NetworkManager networkManager;
-    UnityTransport unityTransport;
-    UIManager uiManager;
-    Rigidbody2D rb2d;
-
+    public Transform groundCheck;
+    public LayerMask groundLayer;
+    
+    public NetworkVariable<bool> isAlive = new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    
+    private NetworkManager _networkManager;
+    private UnityTransport _unityTransport;
+    private UIManager _uiManager;
+    private Rigidbody2D _rb2d;
+    private SpriteRenderer _spriteRenderer;
+    private GameManager _gameManager;
+    
+    // movement variables
     public float MovementSpeed = 1f;
-    public float JumpForce = 1f;
-    float horizontal;
+    public float JumpForce = 20f;
+    private float horizontalInput;
+    private float verticalInput;
+    private bool shouldJump;
+    private bool isGrounded;
+    private Vector2 _jumpDirection = Vector2.up;
+
+    
+    
     void Start()
     {
-        networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
-        unityTransport = networkManager.gameObject.GetComponent<UnityTransport>();
-        uiManager = GameObject.Find("UI").GetComponent<UIManager>();
-        rb2d = this.GetComponent<Rigidbody2D>();
+        _networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
+        _unityTransport = _networkManager.gameObject.GetComponent<UnityTransport>();
+        _uiManager = GameObject.Find("UI").GetComponent<UIManager>();
+        _rb2d = GetComponent<Rigidbody2D>();
+        _rb2d.bodyType = RigidbodyType2D.Dynamic;
+        _spriteRenderer = GetComponent<SpriteRenderer>();
+        _gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
     }
 
+    
+    
     // Update is called once per frame
     void Update()
     {
-        if (uiManager.gameStarted.Value && IsOwner)
+        // igra traje, provjeri input
+        if (_uiManager.gameStarted.Value && IsOwner)
         {
-            //igra je pocela, omoguci kretanje
-            Movement();
+            CheckForMovementInput();
         }
     }
-
+    
+    
+    
     void FixedUpdate() 
     {
         if (IsOwner)
         {
-            rb2d.velocity = new Vector2(horizontal * MovementSpeed, rb2d.velocity.y);
+            _rb2d.velocity = new Vector2(MovementSpeed * Time.fixedDeltaTime * horizontalInput, _rb2d.velocity.y);
+            if (!isGrounded)
+            {
+                _rb2d.gravityScale = 8;
+            }
+            else
+            {
+                _rb2d.gravityScale = 1.5f;
+            }
+            
+            if (shouldJump)
+            {
+                shouldJump = false;
+                Jump();
+            }
         }
     }
 
-    void Movement()
+    
+    
+    void CheckForMovementInput()
     {
-        horizontal = Input.GetAxisRaw("Horizontal");
+        horizontalInput = Input.GetAxisRaw("Horizontal");
+        if (horizontalInput < 0)
+        {
+            _spriteRenderer.flipX = false;
+        }
+        else if (horizontalInput > 0)
+        {
+            _spriteRenderer.flipX = true;
+        }
+        
+        verticalInput = Input.GetAxisRaw("Vertical");
+
+        isGrounded = Physics2D.Raycast(groundCheck.position, Vector2.down, 1, groundLayer);
+        if (Input.GetKey(KeyCode.L))
+        {
+            Debug.LogFormat("isGrounded: {0}", isGrounded);
+        }
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        {
+            shouldJump = true;
+        }
+    }
+
+    
+    
+    void Jump()
+    {
+        Debug.Log("JUMP");
+        _rb2d.AddForce(_jumpDirection * JumpForce, ForceMode2D.Force);
+        _jumpDirection = Vector2.up;
+        _rb2d.gravityScale = 1.5f;
+    }
+    
+    
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        Debug.Log("Spawnan igrac");
+        isAlive.Value = true;
+        isAlive.OnValueChanged += CheckForEndOfRoundAfterPlayerDeath;
+
+        // if you are the owner and the host, set the player to spawnPoint1 and rename the player to "Host"
+        if (IsOwner && IsHost)
+        {
+            transform.SetPositionAndRotation(SpawnLocations.SampleSceneSpawnLocations[0], new Quaternion());
+            //playerName.Value = "Host";
+        }
+        // if you are the owner and the client, set the player to spawnPoint2 and rename the player to "Client"
+        else if (IsOwner && IsClient)
+        {
+            transform.SetPositionAndRotation(SpawnLocations.SampleSceneSpawnLocations[1], new Quaternion());
+            //playerName.Value = "Client";
+        }
+    }
+    
+    
+
+    void CheckForEndOfRoundAfterPlayerDeath(bool prevValue, bool newValue)
+    {
+        if (newValue == false)
+        {
+            //igrac je umro
+            _gameManager.CheckForEndOfRound();
+        }
+    }
+    
+    
+    
+    public void OnCollisionEnter2D(Collision2D other)
+    {
+        return;
+        //Debug.LogFormat("PlayerController::OnCollisionEnter2D");
+        if (other.gameObject.CompareTag($"Sticky"))
+        {
+            //isGrounded = true;
+            //_rb2d.gravityScale = 0f;
+            // vector start is player, vector end is the sticky wall which the player has collided with
+            Vector2 cumulatedContactDirection = new Vector2(); 
+            foreach (var contact in other.contacts)
+            {
+                cumulatedContactDirection.x += contact.point.x - gameObject.transform.position.x;
+                cumulatedContactDirection.y += contact.point.y - gameObject.transform.position.y;
+            }
+            //Debug.LogFormat("cumulatedContactDirection: {0}, {1}", cumulatedContactDirection.x, cumulatedContactDirection.y);
+
+            if (MathF.Abs(cumulatedContactDirection.x) > MathF.Abs(cumulatedContactDirection.y))
+            {
+                // sticky wall is left of the player
+                if (cumulatedContactDirection.x < 0)
+                {
+                    Debug.LogFormat("sticky wall is left of the player");
+                    //_jumpDirection = Vector2.right;
+                }
+                // sticky wall is right of the player
+                else if (cumulatedContactDirection.x > 0)
+                {
+                    Debug.LogFormat("sticky wall is right of the player");
+                    //_jumpDirection = Vector2.left;
+                }
+            }
+            else if (MathF.Abs(cumulatedContactDirection.x) < MathF.Abs(cumulatedContactDirection.y))
+            {
+                // sticky wall is on top of the player
+                if (cumulatedContactDirection.y > 0)
+                {
+                    Debug.LogFormat("sticky wall is on top of the player");
+                    //_jumpDirection = Vector2.down;
+                }
+                // sticky wall is bottom of the player
+                else if (cumulatedContactDirection.y < 0)
+                {
+                    Debug.LogFormat("sticky wall is below the player");
+                    //_jumpDirection = Vector2.down;
+                }
+            }
+        }
+    }
+
+    
+    
+    public void OnCollisionExit2D(Collision2D other)
+    {
+        return;
+        //Debug.LogFormat("PlayerController::OnCollisionExit2D");
+        if (other.gameObject.CompareTag($"Sticky"))
+        {
+            Debug.LogFormat("exit from sticky");
+        }
     }
 }
