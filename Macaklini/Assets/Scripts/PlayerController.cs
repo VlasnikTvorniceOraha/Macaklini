@@ -25,21 +25,31 @@ public class PlayerController : NetworkBehaviour
     private bool _isGroundedRight;
     private bool _isGrounded;
     
+    // movement variables
     private float _horizontalInput;
     private float _verticalInput;
-    private float _horizontalSpeed = 4f;
-    private float _jumpingPower = 15f;
+    private bool _isJumping;
+    
+    // bool to prevent multiple side jumps
+    private bool _bStickyJumpUsed = true;
+    // bool used to determine if the player is stuck to the sticky wall or if they (slowly) slide down
+    private bool _bStickyWallSlidingEnabled = true;
     
     // jump direction changes if we are on a sticky wall
     private Vector2 _jumpDirection = Vector2.up;
     
-    // coyote time:  a brief period of time after running off a platform where the game will still register the player pressing the jump button
-    // jump buffer: same, but for pressing the jump button before landing on the ground
-    private float _coyoteTime = 0.2f; // the bigger the value, the more time the player has to jump button after going over the edge
+    // coyote time and jump buffer variables
     private float _coyoteTimeCounter;
-    private float _jumpBuffertime = 0.1f; // the bigger the value, the more time the player has to jump before landing on the ground 
     private float _jumpBufferCounter;
-    private bool _isJumping;
+    
+    // fixed values
+    private float _horizontalSpeed = 4f;
+    private float _jumpingPower = 15f;
+    private float _coyoteTime = 0.2f; // the bigger the value, the more time the player has to jump button after going over the edge
+    private float _jumpBuffertime = 0.1f; // the bigger the value, the more time the player has to jump before landing on the ground
+    private float _defaultPlayerGravityScale = 3f;
+
+    
     
     
     void Start()
@@ -49,6 +59,7 @@ public class PlayerController : NetworkBehaviour
         _uiManager = GameObject.Find("UI").GetComponent<UIManager>();
         _rb2d = GetComponent<Rigidbody2D>();
         _rb2d.bodyType = RigidbodyType2D.Dynamic;
+        _rb2d.gravityScale = _defaultPlayerGravityScale;
         _boxCollider = GetComponent<BoxCollider2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
@@ -90,16 +101,30 @@ public class PlayerController : NetworkBehaviour
     {
         if (IsOwner)
         {
-            // coyote time and jump buffer update
-            _rb2d.velocity = new Vector2(_horizontalInput * _horizontalSpeed, _rb2d.velocity.y);
+            if (_jumpDirection == Vector2.up)
+            {
+                _rb2d.velocity = new Vector2(_horizontalInput * _horizontalSpeed, _rb2d.velocity.y);
+            }
+            else if (_jumpDirection == Vector2.left)
+            {
+                _rb2d.velocity = new Vector2(0.9f * _rb2d.velocity.x, _rb2d.velocity.y);
+                
+                if (_bStickyWallSlidingEnabled && !_bStickyJumpUsed)
+                {
+                    _rb2d.gravityScale = 0.05f * _defaultPlayerGravityScale;
+                }
+            }
+            else if (_jumpDirection == Vector2.right)
+            {
+                _rb2d.velocity = new Vector2(0.9f * _rb2d.velocity.x, _rb2d.velocity.y);
+                
+                if (_bStickyWallSlidingEnabled && !_bStickyJumpUsed)
+                {
+                    _rb2d.gravityScale = 0.05f * _defaultPlayerGravityScale;
+                }
+            }
+            
         }
-        
-        // rkunstek, 5/1/2025, ideja:
-            // ako smo odskocili od sticky zida,
-            // CheckForMovementInput(): u njemu je _rb2d.velocity = new Vector2(odskocniSpeed, _rb2d.velocity.y);
-            // FixedUpdate: u njemu je _rb2d.velocity = new Vector2(_rb2d.velocity.x +- horizontalInput * horizontalSpeed * 0.1f, _rb2d.velocity.y);
-            // znaci da je horizontal input oslabljen sve dok opet ne landamo na tlo
-            // dodatno, mozda i da maksimiziramo horizontalnu brzinu (da nemre biti veca od odskocne brzine)
     }
     
     
@@ -122,41 +147,63 @@ public class PlayerController : NetworkBehaviour
             -_boxCollider.size.y / 2 + gameObject.transform.position.y);
         _bottomRightCorner = new Vector2(_boxCollider.size.x / 2 + gameObject.transform.position.x, 
             -_boxCollider.size.y / 2 + gameObject.transform.position.y);
-        _isGroundedLeft = Physics2D.Raycast(_bottomLeftCorner, Vector2.down, 0.2f, groundLayer);
-        _isGroundedRight = Physics2D.Raycast(_bottomRightCorner, Vector2.down, 0.2f, groundLayer);
+        _isGroundedLeft = Physics2D.Raycast(_bottomLeftCorner, Vector2.down, 0.1f, groundLayer);
+        _isGroundedRight = Physics2D.Raycast(_bottomRightCorner, Vector2.down, 0.1f, groundLayer);
         _isGrounded = _isGroundedLeft || _isGroundedRight;
-
         
         if (_isGrounded)
         {
             _coyoteTimeCounter = _coyoteTime;
-        }
-        else
-        {
-            _coyoteTimeCounter -= Time.deltaTime;
+            _rb2d.gravityScale = _defaultPlayerGravityScale;
+            _jumpDirection = Vector2.up;
         }
 
-        if (Input.GetButtonDown("Jump"))
+        // normal jump
+        if (_jumpDirection == Vector2.up)
         {
-            _jumpBufferCounter = _jumpBuffertime;
-        }
-        else
-        {
-            _jumpBufferCounter -= Time.deltaTime;
-        }
+            if (!_isGrounded)
+            {
+                _coyoteTimeCounter -= Time.deltaTime;
+            }
 
-        if (_coyoteTimeCounter > 0f && _jumpBufferCounter > 0f && !_isJumping)
-        {
-            _rb2d.velocity = new Vector2(_rb2d.velocity.x, _jumpingPower);
-            _jumpBufferCounter = 0f;
-            StartCoroutine(JumpCooldown());
-        }
+            if (Input.GetButtonDown("Jump"))
+            {
+                _jumpBufferCounter = _jumpBuffertime;
+            }
+            else
+            {
+                _jumpBufferCounter -= Time.deltaTime;
+            }
 
-        // jump higher is the jump button is pressed for longer
-        if (Input.GetButtonUp("Jump") && _rb2d.velocity.y > 0f)
+            if (_coyoteTimeCounter > 0f && _jumpBufferCounter > 0f && !_isJumping)
+            {
+                _rb2d.velocity = new Vector2(_rb2d.velocity.x, _jumpingPower);
+                _jumpBufferCounter = 0f;
+                StartCoroutine(JumpCooldown());
+            }
+
+            // jump higher is the jump button is pressed for longer
+            if (Input.GetButtonUp("Jump") && _rb2d.velocity.y > 0f)
+            {
+                _rb2d.velocity = new Vector2(_rb2d.velocity.x, _rb2d.velocity.y * 0.5f);
+                _coyoteTimeCounter = 0f;
+            }
+        }
+        // side jump left (if the sticky wall is on the right)
+        else if (_jumpDirection == Vector2.left)
         {
-            _rb2d.velocity = new Vector2(_rb2d.velocity.x, _rb2d.velocity.y * 0.5f);
-            _coyoteTimeCounter = 0f;
+            if (Input.GetButtonDown("Jump") && !_bStickyJumpUsed)
+            {
+                _rb2d.velocity = new Vector2(-_jumpingPower, _rb2d.velocity.y);
+            }
+        }
+        // side jump right
+        else if (_jumpDirection == Vector2.right)
+        {
+            if (Input.GetButtonDown("Jump") && !_bStickyJumpUsed)
+            {
+                _rb2d.velocity = new Vector2(_jumpingPower, _rb2d.velocity.y);
+            }
         }
     }
 
@@ -205,31 +252,35 @@ public class PlayerController : NetworkBehaviour
             if (cumulatedContactDirection.x < 0)
             {
                 Debug.LogFormat("sticky wall is left of the player");
-                //_jumpDirection = Vector2.right;
+                _jumpDirection = Vector2.right;
+                _rb2d.velocity = new Vector2(0, 0);
+                _rb2d.gravityScale = 0;
+                _bStickyJumpUsed = false;
             }
             // sticky wall is right of the player
             else if (cumulatedContactDirection.x > 0)
             {
                 Debug.LogFormat("sticky wall is right of the player");
-                //_jumpDirection = Vector2.left;
+                _jumpDirection = Vector2.left;
+                _rb2d.velocity = new Vector2(0, 0);
+                _rb2d.gravityScale = 0;
+                _bStickyJumpUsed = false;
             }
         }
+        // sticky wall is top/bottom of the player, currently not in use
         else if (MathF.Abs(cumulatedContactDirection.x) < MathF.Abs(cumulatedContactDirection.y)) 
         { 
             // sticky wall is on top of the player
             if (cumulatedContactDirection.y > 0)
             {
                 Debug.LogFormat("sticky wall is on top of the player");
-                //_jumpDirection = Vector2.down;
             }
             // sticky wall is bottom of the player
             else if (cumulatedContactDirection.y < 0)
             {
                 Debug.LogFormat("sticky wall is below the player");
-                //_jumpDirection = Vector2.down;
             }
         }
-        
     }
 
     
@@ -239,6 +290,8 @@ public class PlayerController : NetworkBehaviour
         if (other.gameObject.CompareTag("Sticky"))
         {
             Debug.LogFormat("exit from sticky");
+            _rb2d.gravityScale = _defaultPlayerGravityScale;
+            _bStickyJumpUsed = true;
         }
     }
 }
