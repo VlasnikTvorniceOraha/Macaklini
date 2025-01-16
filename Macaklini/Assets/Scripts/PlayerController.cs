@@ -83,17 +83,6 @@ public class PlayerController : NetworkBehaviour
             transform.SetPositionAndRotation(SpawnLocations.SampleSceneSpawnLocations[1], new Quaternion());
         }
     }
-
-    
-    
-    // Update is called once per frame
-    void Update()
-    {
-        if (_uiManager.gameStarted.Value && IsOwner)
-        {
-            CheckForMovementInput();
-        }
-    }
     
     
     
@@ -129,18 +118,33 @@ public class PlayerController : NetworkBehaviour
     
     
     
+    // Update is called once per frame
+    void Update()
+    {
+        if (_uiManager.gameStarted.Value && IsOwner)
+        {
+            CheckForMovementInput();
+        }
+    }
+
+
+    private void LateUpdate()
+    {
+        if (_rb2d.velocity.x < -1E-5)
+        {
+            _spriteRenderer.flipX = false;
+        }
+        else if (_rb2d.velocity.x > 1E-5 && !_spriteRenderer.flipX)
+        {
+            _spriteRenderer.flipX = true;
+        } 
+    }
+
+
     void CheckForMovementInput()
     {
         // horizontal movement
         _horizontalInput = Input.GetAxisRaw("Horizontal");
-        if (_horizontalInput < 0)
-        {
-            _spriteRenderer.flipX = false;
-        }
-        else if (_horizontalInput > 0)
-        {
-            _spriteRenderer.flipX = true;
-        }
 
         // isGrounded check
         _bottomLeftCorner = new Vector2(-_boxCollider.size.x / 2 + gameObject.transform.position.x, 
