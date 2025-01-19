@@ -97,19 +97,29 @@ public class PlayerController : NetworkBehaviour
             else if (_jumpDirection == Vector2.left)
             {
                 _rb2d.velocity = new Vector2(0.9f * _rb2d.velocity.x, _rb2d.velocity.y);
-                
-                if (_bStickyWallSlidingEnabled && !_bStickyJumpUsed)
+
+                if (_bStickyWallSlidingEnabled && !_bStickyJumpUsed && _horizontalInput <= 0)
                 {
                     _rb2d.gravityScale = 0.05f * _defaultPlayerGravityScale;
+                }
+                else if (_bStickyWallSlidingEnabled && !_bStickyJumpUsed && _horizontalInput > 0)
+                {
+                    _rb2d.gravityScale = 0;
+                    _rb2d.velocity = new Vector2(_rb2d.velocity.x, 0.0f);
                 }
             }
             else if (_jumpDirection == Vector2.right)
             {
                 _rb2d.velocity = new Vector2(0.9f * _rb2d.velocity.x, _rb2d.velocity.y);
                 
-                if (_bStickyWallSlidingEnabled && !_bStickyJumpUsed)
+                if (_bStickyWallSlidingEnabled && !_bStickyJumpUsed && _horizontalInput >= 0)
                 {
                     _rb2d.gravityScale = 0.05f * _defaultPlayerGravityScale;
+                }
+                else if (_bStickyWallSlidingEnabled && !_bStickyJumpUsed && _horizontalInput < 0)
+                {
+                    _rb2d.gravityScale = 0;
+                    _rb2d.velocity = new Vector2(_rb2d.velocity.x, 0.0f);
                 }
             }
             
@@ -186,7 +196,7 @@ public class PlayerController : NetworkBehaviour
                 StartCoroutine(JumpCooldown());
             }
 
-            // jump higher is the jump button is pressed for longer
+            // jump higher if the jump button is pressed for longer
             if (Input.GetButtonUp("Jump") && _rb2d.velocity.y > 0f)
             {
                 _rb2d.velocity = new Vector2(_rb2d.velocity.x, _rb2d.velocity.y * 0.5f);
