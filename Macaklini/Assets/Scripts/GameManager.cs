@@ -29,7 +29,6 @@ public class GameManager : NetworkBehaviour
     private NetworkManager _networkManager;
     private UIManager _uiManager;
     private List<PlayerInfoGame> playerInfosGame = new List<PlayerInfoGame>(); // lista na serveru za sve igrace
-    private List<PlayerController> playerControllers = new List<PlayerController>();
     private int roundNumber;
     private List<Transform> playerScorecards = new List<Transform>();
     private TMP_Text readyText;
@@ -60,11 +59,6 @@ public class GameManager : NetworkBehaviour
         }
 
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
-
-        foreach (GameObject player in players)
-        {
-            playerControllers.Add(player.GetComponent<PlayerController>());
-        }
 
         SceneManager.sceneLoaded += StartRoundServer;
     }
@@ -109,6 +103,9 @@ public class GameManager : NetworkBehaviour
         Debug.Log("Runda pocinje");
         roundState = RoundState.RoundStarting;
         InstancePlayers();
+
+
+        
         
         // pocni countdown kada se loada i stavi rundu in progress
         StartRoundClientsRpc();
@@ -128,14 +125,17 @@ public class GameManager : NetworkBehaviour
     {
         // pronadi kojeg igraca posjedujem
         roundState = RoundState.RoundInProgress;
-        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        
         Vector3 ownedPlayerPos = Vector3.zero;
+        PlayerController ownedController = null;
 
-        foreach (GameObject player in players)
+        foreach (PlayerInfoGame player in playerInfosGame)
         {
-            if (player.GetComponent<PlayerController>().IsOwner)
+            if (player.PlayerController.IsOwner)
             {
-                ownedPlayerPos = player.transform.position;
+                ownedController = player.PlayerController;
+                ownedController.canMove = false;
+                ownedPlayerPos = ownedController.transform.position;
                 break;
             }
         }
@@ -167,6 +167,8 @@ public class GameManager : NetworkBehaviour
         readyText.text = "Go!";
         yield return new WaitForSeconds(0.5f);
         readyText.gameObject.SetActive(false);
+        ownedController.canMove = true;
+
     }
 
     
@@ -200,10 +202,12 @@ public class GameManager : NetworkBehaviour
         if (alive == 1)
         {
             EndRoundServer(alivePlayers[0]);
+            return;
         }
         else if (alive == 0)
         {
             EndRoundServer(null);
+            return;
         }
 
         Debug.Log("Nuh uh, zivo je " + alivePlayers.Count + " igraca!");
@@ -278,7 +282,7 @@ public class GameManager : NetworkBehaviour
     {
         roundState = RoundState.GameEnding;
         // natrag u lobby
-        // ui.LobbyAfterGame();
+        _uiManager.LobbyAfterGame();
         SceneManager.LoadScene("MainMenu");
     }
     
@@ -470,6 +474,7 @@ public class GameManager : NetworkBehaviour
             playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject((ulong)currentPlayer.ClientId);
             playerInstance.GetComponent<SpriteRenderer>().sprite = _uiManager.GUNsterSpriteovi[currentPlayer.PlayerGunster];
             currentPlayer.PlayerController = playerInstance.GetComponent<PlayerController>();
+            
         }
     }
 }

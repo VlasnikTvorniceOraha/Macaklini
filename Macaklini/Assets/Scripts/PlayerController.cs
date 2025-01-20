@@ -34,6 +34,8 @@ public class PlayerController : NetworkBehaviour
     private bool _bStickyJumpUsed = true;
     // bool used to determine if the player is stuck to the sticky wall or if they (slowly) slide down
     private bool _bStickyWallSlidingEnabled = true;
+
+    public bool canMove = false;
     
     // jump direction changes if we are on a sticky wall
     private Vector2 _jumpDirection = Vector2.up;
@@ -89,7 +91,7 @@ public class PlayerController : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (_uiManager.gameStarted.Value && IsOwner)
+        if (_uiManager.gameStarted.Value && IsOwner && canMove)
         {
             CheckForMovementInput();
         }

@@ -43,7 +43,7 @@ public class UIManager : NetworkBehaviour
             return;
         }
         DontDestroyOnLoad(this.gameObject);
-        
+
         _networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
         _unityTransport = _networkManager.gameObject.GetComponent<UnityTransport>();
         _networkManager.OnConnectionEvent += PlayerConnected;
@@ -238,6 +238,7 @@ public class UIManager : NetworkBehaviour
     {
         lobbyScreen.SetActive(false);
         background.SetActive(false);
+        _gameManager.roundState = GameManager.RoundState.RoundEnding;
     }
     
 
@@ -370,5 +371,18 @@ public class UIManager : NetworkBehaviour
         }
         localPlayerInfo.PlayerGunster = gunster;
         pickedGunster = true;
+    }
+
+    public void LobbyAfterGame()
+    {
+        //mozda neka kruna za pobjednika?
+        //igraci su vec odigrali rundu i vraca ih se na mainmenu scenu tj u lobby
+        userInfo.SetActive(false);
+        HostJoin.SetActive(false);
+        lobbyScreen.SetActive(true);
+        background.SetActive(true);
+        gameStarted.Value = false;
+        SyncPanelsRpc(playerInfos.ToArray());
+
     }
 }
