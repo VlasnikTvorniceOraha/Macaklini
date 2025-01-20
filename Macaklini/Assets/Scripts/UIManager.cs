@@ -24,6 +24,8 @@ public class UIManager : NetworkBehaviour
     private UnityTransport _unityTransport;
     private List<PlayerInfoLobby> playerInfos = new List<PlayerInfoLobby>(); // lista imena i gunstera za svakog igraca u lobbyu, spremljena na serveru 
     private PlayerInfoLobby localPlayerInfo = new PlayerInfoLobby(); // play info klijenta
+
+    GameManager _gameManager;
     
     private bool receivedRpc = false;
     private bool receivedPlayerInfo = false;
@@ -34,9 +36,19 @@ public class UIManager : NetworkBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        int instances = FindObjectsOfType<UIManager>().Length;
+        if (instances > 1) // promijenjeno u > umjesto != jer kaj ak se istovremeno spawnaju 2 instance
+        {
+            Destroy(gameObject);
+            return;
+        }
+        DontDestroyOnLoad(this.gameObject);
+        
         _networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
         _unityTransport = _networkManager.gameObject.GetComponent<UnityTransport>();
         _networkManager.OnConnectionEvent += PlayerConnected;
+        
+        _gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         
         // callback da se poveca broj u lobbyu
         playersConnected.OnValueChanged += UpdateReadyNumber;
@@ -311,6 +323,7 @@ public class UIManager : NetworkBehaviour
         }
 
         gameStarted.Value = true;
+        _gameManager.ReceivePlayerInfo(playerInfos);
         StartGameRpc();
     }
 
