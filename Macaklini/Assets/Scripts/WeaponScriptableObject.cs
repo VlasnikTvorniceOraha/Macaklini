@@ -9,11 +9,11 @@ public class WeaponScriptableObject : ScriptableObject
     public WeaponType WeaponType;
     public int ClipSize;
     public float FireRate;
-    public Vector3 Spread;
+    public Vector2 Spread;
 
     [Header("Weapon Model")]
-    public Vector3 HoldPoint;       // Local coordinates of the Weapon when it is picked up
-    public Vector3 ShootPoint;
+    public Vector2 HoldPoint;       // Local coordinates of the Weapon when it is picked up
+    public Vector2 ShootPoint;
 
     [Header("Bullet Specs")]
     public float ShootingRange;

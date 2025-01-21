@@ -3,7 +3,7 @@ using UnityEngine;
 using Unity.Netcode;
 using System.Globalization;
 
-public class WeaponScript : NetworkBehaviour
+public class Weapon : NetworkBehaviour
 {
     // Network
     private NetworkManager _networkManager;
@@ -16,24 +16,33 @@ public class WeaponScript : NetworkBehaviour
     private int ammo;
     private float _originalY;
     private bool _isEquipped = false;
+    private FollowTransform followTransform;
 
+    private void Awake()
+    {
+        followTransform = GetComponent<FollowTransform>();
+    }
 
     void Start()
     {
         ammo = weaponConfig.ClipSize;
         _originalY = transform.position.y;
         _networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
+        if (!_networkManager) Debug.LogError("Network manager not found!");
+        else Debug.Log("Network manager initialized");
     }
 
     void Update()
     {
+        //Debug.Log(weaponConfig.name + " is equipped: " + _isEquipped);
         if (!_isEquipped)
         {
             transform.position = new Vector2(transform.position.x, _originalY + Mathf.Sin(5 * Time.time) * 0.1f);
         }
-
-        if (_isEquipped && ownerClientId.Value == NetworkManager.Singleton.LocalClientId)
+        //Debug.Log(weaponConfig.name + " ownership: " + IsOwner);
+        if (_isEquipped)
         {
+            //Debug.Log("Equipped!");
             Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector2 direction = mousePosition - transform.position;
             float weaponAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
@@ -44,52 +53,56 @@ public class WeaponScript : NetworkBehaviour
                 ammo--;
                 Shoot();
             }
+
             if (ammo <= 0)
             {
                 Destroy(gameObject, 0.5f);
             }
         }
+
     }
 
     void Shoot()
     {
         if (IsOwner)
         {
-            Debug.Log("Shoot");
-            //_rayHit = Physics2D.Raycast(shootPoint.position, shootPoint.right, 1000f, whatIsEnemy);
-            //if (_rayHit)
-            //{
-            //    ammo--;
-            //    ShootServerRpc(_rayHit.point);
-            //}
+            ammo--;
+            ShootServerRpc();
         }
     }
 
     [ServerRpc]
-    void ShootServerRpc(Vector2 hitPoint)
+    void ShootServerRpc()
     {
-        ShootClientRpc(hitPoint);
+        ShootClientRpc();
     }
 
     [ClientRpc]
-    void ShootClientRpc(Vector2 hitPoint)
+    void ShootClientRpc()
     {
-        ;
+        Debug.Log("Shoot " + ammo);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Player") && collision.TryGetComponent(out NetworkObject networkObject))
         {
+            Debug.Log(weaponConfig.name + " picked up by player!");
             GetComponent<CircleCollider2D>().enabled = false;
-            transform.parent = collision.transform;
-            transform.localPosition = Vector2.zero;
-            _isEquipped = true;
 
-            if (IsServer)
+            followTransform.SetTargetTransform(collision.transform);
+            //transform.parent = collision.transform;
+            //transform.localPosition = new Vector2(-0.25f, -0.05f);
+            //transform.localPosition = Vector2.zero;
+
+            _isEquipped = true;
+            Debug.Log(IsOwnedByServer + " " + networkObject.IsOwnedByServer + " " + networkObject);
+            if (networkObject.IsOwnedByServer)
             {
+                Debug.Log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
                 ownerClientId.Value = networkObject.OwnerClientId;
             }
         }
     }
+
 }
