@@ -30,6 +30,7 @@ public class Weapon : NetworkBehaviour
         _networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
         if (!_networkManager) Debug.LogError("Network manager not found!");
         else Debug.Log("Network manager initialized");
+        GetComponent<NetworkObject>().Spawn();
     }
 
     void Update()
@@ -39,8 +40,8 @@ public class Weapon : NetworkBehaviour
         {
             transform.position = new Vector2(transform.position.x, _originalY + Mathf.Sin(5 * Time.time) * 0.1f);
         }
-        //Debug.Log(weaponConfig.name + " ownership: " + IsOwner);
-        if (_isEquipped)
+        Debug.Log(weaponConfig.name + " ownership: " + IsOwner);
+        if (_isEquipped && IsOwner)
         {
             //Debug.Log("Equipped!");
             Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -100,7 +101,8 @@ public class Weapon : NetworkBehaviour
             if (networkObject.IsOwnedByServer)
             {
                 Debug.Log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-                ownerClientId.Value = networkObject.OwnerClientId;
+                GetComponent<NetworkObject>().ChangeOwnership(networkObject.NetworkObjectId);
+                ownerClientId.Value = networkObject.NetworkObjectId;
             }
         }
     }
