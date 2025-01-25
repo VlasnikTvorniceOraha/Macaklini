@@ -243,13 +243,17 @@ PrefabInstance:
       propertyPath: GlobalObjectIdHash
       value: 2708369765
       objectReference: {fileID: 0}
+    - target: {fileID: 5436155594166049230, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 1107445889
+      objectReference: {fileID: 0}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: roundState
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: gamesNeededToWin
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8737673237491297102, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: m_Name
@@ -492,6 +496,10 @@ PrefabInstance:
     - target: {fileID: 6492830454806358475, guid: 2ac8f2c27e6bde341a27032716dfa6e3, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 2782945222
+      objectReference: {fileID: 0}
+    - target: {fileID: 6492830454806358475, guid: 2ac8f2c27e6bde341a27032716dfa6e3, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 2868334016
       objectReference: {fileID: 0}
     - target: {fileID: 9158132708305900134, guid: 2ac8f2c27e6bde341a27032716dfa6e3, type: 3}
       propertyPath: m_Name
