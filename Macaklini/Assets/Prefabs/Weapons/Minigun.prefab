@@ -79,10 +79,10 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: 1841711463, guid: 1f646ae29cb3d5c4bbd907d981f60df3, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
+  m_FlipX: 1
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 1, y: 1}
@@ -190,7 +190,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0972e80376847245a1349ae33451114, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weaponConfig: {fileID: 11400000, guid: 06cc9a941dac85747859fe9e614cc174, type: 2}
+  _weaponConfig: {fileID: 11400000, guid: 06cc9a941dac85747859fe9e614cc174, type: 2}
 --- !u!114 &3914615913041173822
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -203,6 +203,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffa16deab7acc3647bf0f0fff9a1ee7a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  weaponConfig: {fileID: 0}
 --- !u!95 &7114776440349218956
 Animator:
   serializedVersion: 5

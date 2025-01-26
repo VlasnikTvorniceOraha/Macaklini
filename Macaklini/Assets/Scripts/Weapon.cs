@@ -7,55 +7,47 @@ public class Weapon : NetworkBehaviour
 {
     // Network
     private NetworkManager _networkManager;
-    private NetworkVariable<ulong> ownerClientId = new NetworkVariable<ulong>();
 
     // Weapon Configuration
-    [SerializeField] private WeaponScriptableObject weaponConfig;
+    [SerializeField] private WeaponScriptableObject _weaponConfig;
 
     // Private variables
-    private int ammo;
+    private int _ammo;
     private float _originalY;
     private bool _isEquipped = false;
-    private FollowTransform followTransform;
+    private FollowTransform _followTransform;
+    private Transform _playerTransform;
 
     private void Awake()
     {
-        followTransform = GetComponent<FollowTransform>();
+        _followTransform = GetComponent<FollowTransform>();
     }
 
     void Start()
     {
-        ammo = weaponConfig.ClipSize;
+        _ammo = _weaponConfig.ClipSize;
         _originalY = transform.position.y;
         _networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
         if (!_networkManager) Debug.LogError("Network manager not found!");
         else Debug.Log("Network manager initialized");
-        GetComponent<NetworkObject>().Spawn();
     }
 
     void Update()
     {
-        //Debug.Log(weaponConfig.name + " is equipped: " + _isEquipped);
         if (!_isEquipped)
         {
             transform.position = new Vector2(transform.position.x, _originalY + Mathf.Sin(5 * Time.time) * 0.1f);
         }
-        Debug.Log(weaponConfig.name + " ownership: " + IsOwner);
+        
         if (_isEquipped && IsOwner)
         {
-            //Debug.Log("Equipped!");
-            Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Vector2 direction = mousePosition - transform.position;
-            float weaponAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            transform.rotation = Quaternion.Euler(0, 0, weaponAngle);
+            RotateToFollowMouse();
 
-            if (Input.GetKeyDown(KeyCode.Mouse0) && ammo > 0)
+            if (Input.GetKeyDown(KeyCode.Mouse0) && _ammo > 0)
             {
-                ammo--;
                 Shoot();
-            }
-
-            if (ammo <= 0)
+            } 
+            else if (_ammo <= 0)
             {
                 Destroy(gameObject, 0.5f);
             }
@@ -63,46 +55,68 @@ public class Weapon : NetworkBehaviour
 
     }
 
+    private void RotateToFollowMouse()
+    {
+        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 direction = mousePosition - transform.position;
+        float weaponAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0, 0, weaponAngle);
+    }
+
     void Shoot()
     {
         if (IsOwner)
         {
-            ammo--;
+            _ammo--;
             ShootServerRpc();
         }
-    }
-
-    [ServerRpc]
-    void ShootServerRpc()
-    {
-        ShootClientRpc();
-    }
-
-    [ClientRpc]
-    void ShootClientRpc()
-    {
-        Debug.Log("Shoot " + ammo);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Player") && collision.TryGetComponent(out NetworkObject networkObject))
         {
-            Debug.Log(weaponConfig.name + " picked up by player!");
-            GetComponent<CircleCollider2D>().enabled = false;
+            Debug.Log($"{_weaponConfig.name} picked up by player!");
 
-            followTransform.SetTargetTransform(collision.transform);
-            //transform.parent = collision.transform;
-            //transform.localPosition = new Vector2(-0.25f, -0.05f);
-            //transform.localPosition = Vector2.zero;
+            _playerTransform = collision.transform;
 
-            _isEquipped = true;
-            Debug.Log(IsOwnedByServer + " " + networkObject.IsOwnedByServer + " " + networkObject);
-            if (networkObject.IsOwnedByServer)
+            WeaponPickedUpServerRPC(networkObject.OwnerClientId);
+        }
+    }
+
+    [Rpc(SendTo.Server)]
+    void ShootServerRpc()
+    {
+        ShootClientRpc();
+    }
+
+    [Rpc(SendTo.ClientsAndHost)]
+    void ShootClientRpc()
+    {
+        Debug.Log("Shoot " + _ammo);
+    }
+
+    [Rpc(SendTo.Server)]
+    private void WeaponPickedUpServerRPC(ulong ClientId)
+    {
+        GetComponent<NetworkObject>().ChangeOwnership(ClientId);
+        WeaponPickedUpClientRPC(RpcTarget.Single(ClientId, RpcTargetUse.Temp));
+    }
+
+    [Rpc(SendTo.SpecifiedInParams)]
+    private void WeaponPickedUpClientRPC(RpcParams rpcParams = default)
+    {
+        if (rpcParams.Receive.SenderClientId == NetworkManager.LocalClientId)
+        {
+            if (_playerTransform != null)
             {
-                Debug.Log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-                GetComponent<NetworkObject>().ChangeOwnership(networkObject.NetworkObjectId);
-                ownerClientId.Value = networkObject.NetworkObjectId;
+                _isEquipped = true;
+                GetComponent<CircleCollider2D>().enabled = false;
+                _followTransform.SetTargetTransform(_playerTransform);
+            }
+            else
+            {
+                Debug.LogError("Player transform was not cached correctly!");
             }
         }
     }

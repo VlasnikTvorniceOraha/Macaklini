@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 626533912
+  GlobalObjectIdHash: 1107445889
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -66,10 +66,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b4870d72d95207943b717380be326716, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  roundState: 2
   playerPrefab: {fileID: 1539061595510465819, guid: e747488dd13085640a0c9fd0863fc164, type: 3}
   LevelsToLoad:
   - SampleScene
   - Testing
-  gamesNeededToWin: 3
+  gamesNeededToWin: 2
   scoreboard: {fileID: 0}
-  roundState: 0
+  weaponPrefabs:
+  - {fileID: 1494011996217332865, guid: ca577bda033da5c4d9ae3020e8138b5c, type: 3}
+  - {fileID: 983293967223332727, guid: 18979a2f7c3ca94409425060059172d9, type: 3}

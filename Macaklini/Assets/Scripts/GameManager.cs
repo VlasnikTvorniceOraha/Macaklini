@@ -32,6 +32,9 @@ public class GameManager : NetworkBehaviour
     private int roundNumber;
     private List<Transform> playerScorecards = new List<Transform>();
     private TMP_Text readyText;
+
+    private GameObject[] _weaponSpawnPoints;
+    [SerializeField] private GameObject[] weaponPrefabs;
     
     // Start is called before the first frame update
     void Start()
@@ -103,7 +106,7 @@ public class GameManager : NetworkBehaviour
         Debug.Log("Runda pocinje");
         roundState = RoundState.RoundStarting;
         InstancePlayers();
-
+        InstanceWeapons();
 
         
         
@@ -475,6 +478,20 @@ public class GameManager : NetworkBehaviour
             playerInstance.GetComponent<SpriteRenderer>().sprite = _uiManager.GUNsterSpriteovi[currentPlayer.PlayerGunster];
             currentPlayer.PlayerController = playerInstance.GetComponent<PlayerController>();
             
+        }
+    }
+
+    void InstanceWeapons()
+    {
+        _weaponSpawnPoints = GameObject.FindGameObjectsWithTag("WeaponSpawnPoint");
+        Debug.Log($"{_weaponSpawnPoints.Length} spawn points found");
+        foreach (GameObject weaponSpawnPoint in _weaponSpawnPoints)
+        {
+            int index = Random.Range(0, 2);
+            Debug.Log($"{weaponSpawnPoint.name}{weaponSpawnPoint.transform.position}; random index: {index}");
+            GameObject weapon = Instantiate(weaponPrefabs[index], weaponSpawnPoint.transform.position, Quaternion.identity);
+            weapon.GetComponent<NetworkObject>().Spawn();
+
         }
     }
 }

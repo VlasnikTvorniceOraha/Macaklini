@@ -123,7 +123,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0972e80376847245a1349ae33451114, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weaponConfig: {fileID: 11400000, guid: 28a96dc004520a049bdd036640605e56, type: 2}
+  _weaponConfig: {fileID: 11400000, guid: 28a96dc004520a049bdd036640605e56, type: 2}
 --- !u!58 &4077312546267170636
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -202,6 +202,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffa16deab7acc3647bf0f0fff9a1ee7a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  weaponConfig: {fileID: 0}
 --- !u!1 &7421819636770944983
 GameObject:
   m_ObjectHideFlags: 0
