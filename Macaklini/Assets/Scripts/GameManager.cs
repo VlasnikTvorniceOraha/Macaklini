@@ -170,8 +170,10 @@ public class GameManager : NetworkBehaviour
         readyText.text = "Go!";
         yield return new WaitForSeconds(0.5f);
         readyText.gameObject.SetActive(false);
-        ownedController.canMove = true;
-
+        if (ownedController != null)
+        {
+            ownedController.canMove = true;
+        }
     }
 
     
@@ -183,6 +185,7 @@ public class GameManager : NetworkBehaviour
         {
             return;
         }
+        
         // provjeri kraj runde sekundu nakon necije smrti
         // ako je samo jedan igrac ostao ziv -> zavrsi rundu
         // ako nitko nije ziv isto zavrsi rundu
@@ -372,7 +375,7 @@ public class GameManager : NetworkBehaviour
         EndRoundClientsRpc();
     }
 
-    void AddDeath(int clientId)
+    public void AddDeath(int clientId)
     {
         // Server only
         if (!IsServer)
@@ -406,7 +409,7 @@ public class GameManager : NetworkBehaviour
 
     
     
-    void AddKill(int clientId)
+    public void AddKill(int clientId)
     {
         // Server only
         if (!IsServer)
