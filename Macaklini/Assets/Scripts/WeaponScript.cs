@@ -22,7 +22,7 @@ public class WeaponScript : NetworkBehaviour
     private RaycastHit2D _rayHit;
     private FollowTransform _followTransform;
     private Transform _playerTransform;
-
+    PlayerController playerWeaponManager;
     private void Awake()
     {
         _followTransform = GetComponent<FollowTransform>();
@@ -61,7 +61,7 @@ public class WeaponScript : NetworkBehaviour
                 shooting = Input.GetKeyDown(KeyCode.Mouse0);
             }
 
-            if (shooting && ammo > 0 && readyToShoot)
+            if (shooting && ammo > 0 && readyToShoot && !isShotgun)
             {
                 sound.Play();
                 readyToShoot = false;
@@ -71,8 +71,26 @@ public class WeaponScript : NetworkBehaviour
                 ammo--;
                 Shoot();
             }
+
+            if (shooting && ammo > 0 && readyToShoot && isShotgun)
+            {
+                sound.Play();
+                readyToShoot = false;
+
+                Invoke(nameof(ResetShot), 60f / fireRate);
+
+                ammo--;
+                shootPoint.localEulerAngles = new Vector3(0, 0, UnityEngine.Random.Range(-13, 13));
+                Shoot();
+                shootPoint.localEulerAngles = new Vector3(0, 0, UnityEngine.Random.Range(-13, 13));
+                Shoot();
+                shootPoint.localEulerAngles = new Vector3(0, 0, UnityEngine.Random.Range(-13, 13));
+                Shoot();
+                shootPoint.localEulerAngles = new Vector3(0, 0, 0);
+            }
             else if (ammo <= 0)
             {
+                playerWeaponManager.DropWeapon();
                 Destroy(gameObject, 0.5f);
             }
         }
@@ -155,13 +173,22 @@ public class WeaponScript : NetworkBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.CompareTag("Player") && collision.TryGetComponent(out NetworkObject networkObject) && !_isEquipped)
+        if (collision.CompareTag("Player") && collision.TryGetComponent(out NetworkObject networkObject))
         {
-            Debug.Log($"{transform.gameObject.name} picked up by player!");
+            playerWeaponManager = collision.GetComponent<PlayerController>();
 
-            _playerTransform = collision.transform;
 
-            WeaponPickedUpServerRPC(networkObject.OwnerClientId);
+            if (!playerWeaponManager.HasWeaponEquipped)
+            {
+                Debug.Log($"{transform.gameObject.name} picked up by player!");
+                _playerTransform = collision.transform;
+                playerWeaponManager.EquipWeapon();
+                WeaponPickedUpServerRPC(networkObject.OwnerClientId);
+            }
+            else
+            {
+                Debug.Log("Player already has a weapon equipped!");
+            }
         }
     }
 

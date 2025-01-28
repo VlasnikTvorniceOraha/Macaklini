@@ -210,8 +210,8 @@ MonoBehaviour:
     m_Bits: 73
   DEBUG_POINT: {fileID: 767515263661167483, guid: 4793c56c2edc2a045b5605c2bb7c5f15, type: 3}
   maxAmmo: 3
-  isAutomatic: 1
-  isShotgun: 0
+  isAutomatic: 0
+  isShotgun: 1
   fireRate: 90
 --- !u!82 &-1019390697608167928
 AudioSource:
@@ -224,7 +224,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: b87a1049169933f44b5843f065078997, type: 3}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 0.128
   m_Pitch: 1
   Loop: 0

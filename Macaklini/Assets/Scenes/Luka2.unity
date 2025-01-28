@@ -249,12 +249,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: weaponPrefabs.Array.size
-      value: 5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: weaponPrefabs.Array.data[0]
       value: 
-      objectReference: {fileID: 5630050448736940501, guid: 75ab896acb66ab94aab1cabfc5f28db2, type: 3}
+      objectReference: {fileID: 983293967223332727, guid: 18979a2f7c3ca94409425060059172d9, type: 3}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: weaponPrefabs.Array.data[1]
       value: 
@@ -270,7 +270,7 @@ PrefabInstance:
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: weaponPrefabs.Array.data[4]
       value: 
-      objectReference: {fileID: 983293967223332727, guid: 18979a2f7c3ca94409425060059172d9, type: 3}
+      objectReference: {fileID: 1494011996217332865, guid: ca577bda033da5c4d9ae3020e8138b5c, type: 3}
     - target: {fileID: 8737673237491297102, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: m_Name
       value: GameManager

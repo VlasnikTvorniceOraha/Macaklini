@@ -51,9 +51,19 @@ public class PlayerController : NetworkBehaviour
     private float _jumpBuffertime = 0.1f; // the bigger the value, the more time the player has to jump before landing on the ground
     private float _defaultPlayerGravityScale = 3f;
 
-    
-    
-    
+
+    public bool HasWeaponEquipped { get; private set; } = false;
+
+    public void EquipWeapon()
+    {
+        HasWeaponEquipped = true;
+    }
+
+    public void DropWeapon()
+    {
+        HasWeaponEquipped = false;
+    }
+
     void Start()
     {
         _networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
