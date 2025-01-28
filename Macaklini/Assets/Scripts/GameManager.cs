@@ -490,7 +490,7 @@ public class GameManager : NetworkBehaviour
         Debug.Log($"{_weaponSpawnPoints.Length} spawn points found");
         foreach (GameObject weaponSpawnPoint in _weaponSpawnPoints)
         {
-            int index = Random.Range(0, 2);
+            int index = Random.Range(0, weaponPrefabs.Length);
             Debug.Log($"{weaponSpawnPoint.name}{weaponSpawnPoint.transform.position}; random index: {index}");
             GameObject weapon = Instantiate(weaponPrefabs[index], weaponSpawnPoint.transform.position, Quaternion.identity);
             weapon.GetComponent<NetworkObject>().Spawn();

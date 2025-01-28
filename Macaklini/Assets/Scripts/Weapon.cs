@@ -61,6 +61,18 @@ public class Weapon : NetworkBehaviour
         Vector2 direction = mousePosition - transform.position;
         float weaponAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, weaponAngle);
+
+        Vector3 localScale = Vector3.one;
+        if (weaponAngle > 90 || weaponAngle < -90)
+        {
+            localScale.y = -1f;
+        }
+        else
+        {
+            localScale.y = 1f;
+        }
+
+        transform.localScale = localScale;
     }
 
     void Shoot()
@@ -94,6 +106,7 @@ public class Weapon : NetworkBehaviour
     void ShootClientRpc()
     {
         Debug.Log("Shoot " + _ammo);
+
     }
 
     [Rpc(SendTo.Server)]

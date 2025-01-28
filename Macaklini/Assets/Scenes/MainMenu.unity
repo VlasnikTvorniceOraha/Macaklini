@@ -247,6 +247,14 @@ PrefabInstance:
       propertyPath: InScenePlacedSourceGlobalObjectIdHash
       value: 1107445889
       objectReference: {fileID: 0}
+    - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
+      propertyPath: weaponPrefabs.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
+      propertyPath: weaponPrefabs.Array.data[2]
+      value: 
+      objectReference: {fileID: 5630050448736940501, guid: 75ab896acb66ab94aab1cabfc5f28db2, type: 3}
     - target: {fileID: 8737673237491297102, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: m_Name
       value: GameManager
