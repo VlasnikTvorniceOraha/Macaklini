@@ -4,6 +4,8 @@ using Unity.Netcode;
 
 public class WeaponScript : NetworkBehaviour
 {
+    private int WEAPON_DAMANGE = 10;
+        
     [SerializeField] private Transform shootPoint;
     [SerializeField] private TrailRenderer bulletTrail;
     [SerializeField] private LayerMask whatIsEnemy;
@@ -73,6 +75,13 @@ public class WeaponScript : NetworkBehaviour
             {
                 ammo--;
                 ShootServerRpc(_rayHit.point);
+                
+                // damage the enemy hit
+                HealthManager healthManager = _rayHit.collider.GetComponent<HealthManager>();
+                if (healthManager != null)
+                {
+                    healthManager.TakeDamage(WEAPON_DAMANGE, (int)ownerClientId.Value);
+                }
             }
         }
     }
