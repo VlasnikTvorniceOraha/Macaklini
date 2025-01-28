@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using Unity.Netcode;
+using Unity.Services.Authentication;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -29,7 +30,7 @@ public class GameManager : NetworkBehaviour
     private NetworkManager _networkManager;
     private UIManager _uiManager;
     private List<PlayerInfoGame> playerInfosGame = new List<PlayerInfoGame>(); // lista na serveru za sve igrace
-    private int roundNumber;
+    private NetworkVariable<int> roundNumber = new NetworkVariable<int>(1, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private List<Transform> playerScorecards = new List<Transform>();
     private TMP_Text readyText;
 
@@ -53,7 +54,6 @@ public class GameManager : NetworkBehaviour
         _uiManager = GameObject.Find("UI").GetComponent<UIManager>();
         readyText = _uiManager.transform.Find("ReadyText").GetComponent<TMP_Text>();
         scoreboard = _uiManager.transform.Find("Scoreboard").gameObject;
-        roundNumber = 0;
         roundState = RoundState.RoundEnding;
 
         foreach (Transform playerScorecard in scoreboard.transform.Find("Players"))
@@ -71,17 +71,12 @@ public class GameManager : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.P) && IsServer)
+        if (Input.GetKeyDown(KeyCode.P) && IsServer && _uiManager.gameStarted.Value)
         {
             UpdateScoreBoardRpc(playerInfosGame.ToArray());
         }
-
-        if (Input.GetKeyDown(KeyCode.L) && IsServer)
-        {
-            
-        }
         
-        if (Input.GetKeyDown(KeyCode.K) && IsServer)
+        if (Input.GetKeyDown(KeyCode.K) && IsServer && _uiManager.gameStarted.Value)
         {
             CheckForEndOfRound();
         }
@@ -108,7 +103,7 @@ public class GameManager : NetworkBehaviour
         InstancePlayers();
         InstanceWeapons();
 
-        
+        UpdateScoreBoardRpc(playerInfosGame.ToArray());
         
         // pocni countdown kada se loada i stavi rundu in progress
         StartRoundClientsRpc();
@@ -235,30 +230,43 @@ public class GameManager : NetworkBehaviour
 
         if (roundWinner == null)
         {
-            EndRoundClientsRpc();
+            EndRoundClientsRpc(null);
         }
         else
         {
             // netko je ipak pobijedio
-            WinRound(roundWinner.ClientId);
+            WinRound(roundWinner);
         }
     }
 
     
     
     [Rpc(SendTo.ClientsAndHost)]
-    void EndRoundClientsRpc()
+    void EndRoundClientsRpc(PlayerInfoGame winner)
     {
-        StartCoroutine(EndRoundCoroutine());
+        StartCoroutine(EndRoundCoroutine(winner));
     }
     
     
     
-    IEnumerator EndRoundCoroutine()
+    IEnumerator EndRoundCoroutine(PlayerInfoGame winner)
     {
         roundState = RoundState.RoundEnding;
+        //stavi tekst pobjednika na skrin
+        readyText.gameObject.SetActive(true);
+        if (winner == null)
+        {
+            
+            readyText.text = "Nobody wins the round!";
+        }
+        else
+        {
+            readyText.text = winner.PlayerName + " wins the round!";
+        }
         yield return new WaitForSeconds(5f);
+        readyText.gameObject.SetActive(false);
         string currentLevel = SceneManager.GetActiveScene().name;
+
 
         // rollaj random level osim trenutnog
         List<string> levelsToChooseFrom = LevelsToLoad.Where(level => level != currentLevel).ToList();
@@ -275,20 +283,35 @@ public class GameManager : NetworkBehaviour
         {
             return;
         }
-        
+        roundNumber.Value = 1;
         Debug.Log("Igra zavrsava");
         roundState = RoundState.GameEnding;
-        EndGameClientsRpc();
+        EndGameClientsRpc(winner);
     }
     
     
 
     [Rpc(SendTo.ClientsAndHost)]
-    void EndGameClientsRpc()
+    void EndGameClientsRpc(PlayerInfoGame winner)
+    {
+        StartCoroutine(EndGameCoroutine(winner));
+        
+    }
+
+    IEnumerator EndGameCoroutine(PlayerInfoGame winner)
     {
         roundState = RoundState.GameEnding;
+        readyText.gameObject.SetActive(true);
+        readyText.text = winner.PlayerName + " wins the game!";
+
+        yield return new WaitForSeconds(5f);
+        readyText.gameObject.SetActive(false);
+        if (scoreboard.activeSelf)
+        {
+            ToggleScoreboard();
+        }
         // natrag u lobby
-        _uiManager.LobbyAfterGame();
+        _uiManager.LobbyAfterGame(winner);
         SceneManager.LoadScene("MainMenu");
     }
     
@@ -320,12 +343,20 @@ public class GameManager : NetworkBehaviour
     void UpdateScoreBoard(List<PlayerInfoGame> playerInfoGames)
     {
         // za svakog igraca ispuni podatke u scoreboardu
+        foreach (Transform playerScorecard in playerScorecards)
+        {
+            playerScorecard.gameObject.SetActive(false);
+        }
+
+        
+        //provjeri koliko igraca ima i ukljuci samo toliko kartica
+        
         // ispuni i donji panel sa informacija o levelu i rundi
 
         foreach (PlayerInfoGame player in playerInfosGame)
         {
             Transform currentPlayerScorecard = playerScorecards[playerInfosGame.IndexOf(player)];
-
+            currentPlayerScorecard.gameObject.SetActive(true);
             // Name
             currentPlayerScorecard.Find("Name").GetComponent<TMP_Text>().text = player.PlayerName;
             // RoundsWon
@@ -342,37 +373,38 @@ public class GameManager : NetworkBehaviour
         Transform donjiPanel = scoreboard.transform.Find("Bottom").Find("Panel");
 
         donjiPanel.Find("Level").GetComponent<TMP_Text>().text = "Level: " + SceneManager.GetActiveScene().name;
-        donjiPanel.Find("RoundNumber").GetComponent<TMP_Text>().text = "Round number: " + roundNumber.ToString();
+        donjiPanel.Find("RoundNumber").GetComponent<TMP_Text>().text = "Round number: " + roundNumber.Value.ToString();
+        donjiPanel.Find("RoundsToWin").GetComponent<TMP_Text>().text = "Rounds to win: " + gamesNeededToWin.ToString();
     }
 
 
 
-    void WinRound(int winnerClientId)
+    void WinRound(PlayerInfoGame winner)
     {
         // Server only
         if (!IsServer)
         {
             return;
         }
+        roundNumber.Value += 1;
 
-
-        foreach (PlayerInfoGame player in playerInfosGame)
+        if (winner != null)
         {
-            if (player.ClientId == winnerClientId)
-            {
-                player.RoundsWon += 1;
-                if (player.RoundsWon >= gamesNeededToWin)
+            winner.RoundsWon += 1;
+            if (winner.RoundsWon >= gamesNeededToWin)
                 {
                     roundState = RoundState.GameEnding;
-                    EndGame(player);
+                    EndGame(winner);
+                    UpdateScoreBoardRpc(playerInfosGame.ToArray());
                     return;
                 }
-            }
         }
-
+            
+                
+                
         roundState = RoundState.RoundEnding;
         UpdateScoreBoardRpc(playerInfosGame.ToArray());
-        EndRoundClientsRpc();
+        EndRoundClientsRpc(winner);
     }
 
     public void AddDeath(int clientId)
