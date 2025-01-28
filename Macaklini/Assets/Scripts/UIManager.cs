@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Collections;
 using UnityEngine.UI;
+using Unity.Services.Authentication;
 
 public class UIManager : NetworkBehaviour
 {
@@ -205,7 +206,7 @@ public class UIManager : NetworkBehaviour
 
     // RPC za syncanje panela na svim klijentima
     [Rpc(SendTo.ClientsAndHost)]
-    private void SyncPanelsRpc(PlayerInfoLobby[] serverInfo)
+    private void SyncPanelsRpc(PlayerInfoLobby[] serverInfo, int lastRoundWinnerId = -1)
     {
         Transform playerPanelList = lobbyScreen.transform.Find("Panel").Find("Players");
         foreach (Transform panel in playerPanelList)
@@ -224,10 +225,13 @@ public class UIManager : NetworkBehaviour
             panel.transform.Find("Ime").GetComponent<TMP_Text>().text = playerInfo.PlayerName;
             panel.transform.Find("Status").GetComponent<TMP_Text>().text = "Connected with id: " + playerInfo.ClientId;
             panel.transform.Find("Slika").GetComponent<Image>().sprite = GUNsterSpriteovi[playerInfo.PlayerGunster];
+            if (playerInfo.ClientId == lastRoundWinnerId)
+            {
+                panel.transform.Find("winner").gameObject.SetActive(true);
+            }
 
         }
 
-        // todo: imena kasnije isto ig
     }
     
     
@@ -373,16 +377,22 @@ public class UIManager : NetworkBehaviour
         pickedGunster = true;
     }
 
-    public void LobbyAfterGame()
+    public void LobbyAfterGame(PlayerInfoGame winner)
     {
         //mozda neka kruna za pobjednika?
+        Transform playerPanelList = lobbyScreen.transform.Find("Panel").Find("Players");
+        foreach (Transform panel in playerPanelList)
+        {
+            panel.transform.Find("winner").gameObject.SetActive(false);
+        }
+        
         //igraci su vec odigrali rundu i vraca ih se na mainmenu scenu tj u lobby
         userInfo.SetActive(false);
         HostJoin.SetActive(false);
         lobbyScreen.SetActive(true);
         background.SetActive(true);
         gameStarted.Value = false;
-        SyncPanelsRpc(playerInfos.ToArray());
+        SyncPanelsRpc(playerInfos.ToArray(), winner.ClientId);
 
     }
 }
