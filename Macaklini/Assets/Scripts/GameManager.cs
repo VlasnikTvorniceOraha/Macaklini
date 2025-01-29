@@ -123,7 +123,7 @@ public class GameManager : NetworkBehaviour
     
     IEnumerator ReadyCountdown()
     {
-        yield return new WaitForSeconds(1.0f);
+        yield return new WaitForEndOfFrame();
         // pronadi kojeg igraca posjedujem
         roundState = RoundState.RoundInProgress;
         Vector3 ownedPlayerPos = Vector3.zero;
@@ -134,8 +134,8 @@ public class GameManager : NetworkBehaviour
 
         foreach(GameObject player in players)
         {
-            Debug.Log("Player with ID " + player.GetComponent<PlayerController>().ownerId.Value);
-            if (player.GetComponent<PlayerController>().ownerId.Value == (int)_networkManager.LocalClientId)
+            Debug.Log("Player with ID " + player.GetComponent<NetworkObject>().OwnerClientId);
+            if (player.GetComponent<NetworkObject>().OwnerClientId == _networkManager.LocalClientId)
             {
                 myPlayer = player;
             }
@@ -233,6 +233,7 @@ public class GameManager : NetworkBehaviour
         Debug.Log("Runda zavrsava");
         roundState = RoundState.RoundEnding;
 
+
         if (roundWinner == null)
         {
             EndRoundClientsRpc(null);
@@ -268,16 +269,31 @@ public class GameManager : NetworkBehaviour
         {
             readyText.text = winner.PlayerName + " wins the round!";
         }
-        yield return new WaitForSeconds(5f);
-        readyText.gameObject.SetActive(false);
-        string currentLevel = SceneManager.GetActiveScene().name;
 
+        yield return new WaitForSeconds(4f);
+        //despawnaj igrace i oruzja ako si server
+        if (IsServer)
+        {
+            DespawnPlayers();
+            DespawnWeapons();
+        }
+        yield return new WaitForSeconds(1f);
+        readyText.gameObject.SetActive(false);
+        
+
+        
+        
 
         // rollaj random level osim trenutnog
-        List<string> levelsToChooseFrom = LevelsToLoad.Where(level => level != currentLevel).ToList();
-        Debug.Log(levelsToChooseFrom);
-        int index = Random.Range(0, levelsToChooseFrom.Count);
-        LoadSceneRpc(levelsToChooseFrom[index]);
+        if (IsServer)
+        {
+            string currentLevel = SceneManager.GetActiveScene().name;
+            List<string> levelsToChooseFrom = LevelsToLoad.Where(level => level != currentLevel).ToList();
+            Debug.Log(levelsToChooseFrom);
+            int index = Random.Range(0, levelsToChooseFrom.Count);
+            LoadSceneRpc(levelsToChooseFrom[index]);
+        }
+        
     }
 
     
@@ -517,7 +533,6 @@ public class GameManager : NetworkBehaviour
             playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject((ulong)currentPlayer.ClientId);
             
             currentPlayer.PlayerController = playerInstance.GetComponent<PlayerController>();
-            currentPlayer.PlayerController.ownerId.Value = currentPlayer.ClientId;
         }
 
 
@@ -536,18 +551,17 @@ public class GameManager : NetworkBehaviour
 
     private IEnumerator InstancePlayersCoroutine(PlayerInfoGame[] playerInfos)
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForEndOfFrame();
         //pronadi moj playerinfo
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
         Debug.Log(players.Length);
         foreach (GameObject player in players) 
         {
-            PlayerController playerController = player.GetComponent<PlayerController>();
+            
             foreach (PlayerInfoGame playerInfo in playerInfos)
             {
-                Debug.Log("Klijent ID ovog igraca je " + playerInfo.ClientId);
-                Debug.Log("Kontroler ima ownera " + playerController.ownerId.Value);
-                if (playerInfo.ClientId == playerController.ownerId.Value)
+                
+                if (playerInfo.ClientId == (int)player.GetComponent<NetworkObject>().OwnerClientId)
                 {
                     
                     Debug.Log("Sprite postavljen");
@@ -559,6 +573,32 @@ public class GameManager : NetworkBehaviour
         }
 
         
+    }
+
+    private void DespawnPlayers()
+    {
+        //Server only
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+
+        foreach (GameObject player in players)
+        {
+            player.GetComponent<NetworkObject>().Despawn(destroy: true);
+        }
+
+        Debug.Log("Despawnao igrace");
+    }
+
+    private void DespawnWeapons()
+    {
+        //Server only
+        GameObject[] weapons = GameObject.FindGameObjectsWithTag("Weapon");
+
+        foreach (GameObject weapon in weapons)
+        {
+            weapon.GetComponent<NetworkObject>().Despawn(destroy: true);
+        }
+
+        Debug.Log("Despawnao oruzja");
     }
 
     void InstanceWeapons()

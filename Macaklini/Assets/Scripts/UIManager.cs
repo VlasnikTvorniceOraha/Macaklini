@@ -182,6 +182,11 @@ public class UIManager : NetworkBehaviour
                 Debug.Log("Klijent odabrao gunstera i ime");
                 userInfo.SetActive(false);
                 lobbyScreen.SetActive(true);
+                Transform playerPanelList = lobbyScreen.transform.Find("Panel").Find("Players");
+                foreach (Transform panel in playerPanelList)
+                {
+                    panel.transform.Find("winner").gameObject.SetActive(false);
+                }
                 
                 // sad imamo ispunjeni playerinfo, posalji serveru i klijent je gotov
                 SendPlayerInfoRpc(localPlayerInfo);
