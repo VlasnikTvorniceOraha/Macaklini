@@ -257,7 +257,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: LevelsToLoad.Array.data[0]
-      value: Kuhinja
+      value: Vrt
       objectReference: {fileID: 0}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: LevelsToLoad.Array.data[1]
@@ -265,7 +265,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: LevelsToLoad.Array.data[2]
-      value: Vrt
+      value: Kuhinja
       objectReference: {fileID: 0}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: LevelsToLoad.Array.data[3]
