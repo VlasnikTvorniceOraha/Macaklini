@@ -190,7 +190,7 @@ public class WeaponScript : NetworkBehaviour
 
             if (!playerWeaponManager.HasWeaponEquipped)
             {
-                Debug.Log($"{transform.gameObject.name} picked up by player!");
+                Debug.Log($"{transform.gameObject.name} picked up by {networkObject.OwnerClientId}!");
                 _playerTransform = collision.transform;
                 playerWeaponManager.EquipWeapon();
                 WeaponPickedUpServerRPC(networkObject.OwnerClientId);
@@ -206,7 +206,12 @@ public class WeaponScript : NetworkBehaviour
     private void WeaponPickedUpServerRPC(ulong ClientId)
     {
         GetComponent<NetworkObject>().ChangeOwnership(ClientId);
-        WeaponPickedUpClientRPC(RpcTarget.Single(ClientId, RpcTargetUse.Temp));
+        Invoke(nameof(InvokeClientPickup), 0.1f);
+    }
+
+    private void InvokeClientPickup()
+    {
+        WeaponPickedUpClientRPC(RpcTarget.Single(NetworkManager.LocalClientId, RpcTargetUse.Temp));
     }
 
     [Rpc(SendTo.SpecifiedInParams)]
@@ -214,11 +219,14 @@ public class WeaponScript : NetworkBehaviour
     {
         if (rpcParams.Receive.SenderClientId == NetworkManager.LocalClientId)
         {
+            Debug.Log("WeaponPickedUpClientRPC called for client: " + NetworkManager.LocalClientId);
+
             if (_playerTransform != null)
             {
                 _isEquipped = true;
                 GetComponent<CircleCollider2D>().enabled = false;
                 _followTransform.SetTargetTransform(_playerTransform);
+                playerWeaponManager.EquipWeapon();
             }
             else
             {
