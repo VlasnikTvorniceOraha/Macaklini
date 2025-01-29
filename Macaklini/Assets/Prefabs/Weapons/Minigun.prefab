@@ -79,7 +79,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 10
   m_Sprite: {fileID: -2110031411, guid: 49435116ea7fdd64db90301df52b4f7c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 1
@@ -138,7 +138,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 562835701
+  GlobalObjectIdHash: 1946784943
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -176,7 +176,7 @@ MonoBehaviour:
   UseQuaternionCompression: 1
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
-  Interpolate: 0
+  Interpolate: 1
   SlerpPosition: 0
 --- !u!114 &3914615913041173822
 MonoBehaviour:
@@ -304,11 +304,12 @@ MonoBehaviour:
   whatIsEnemy:
     serializedVersion: 2
     m_Bits: 73
-  DEBUG_POINT: {fileID: 767515263661167483, guid: 4793c56c2edc2a045b5605c2bb7c5f15, type: 3}
+  DEBUG_POINT: {fileID: 5132098910828147348, guid: 5a4d734364cf9eb46b3c3c01b63ea950, type: 3}
   maxAmmo: 60
   isAutomatic: 1
   isShotgun: 0
   fireRate: 700
+  damage: 10
 --- !u!1 &7346515650439929825
 GameObject:
   m_ObjectHideFlags: 0

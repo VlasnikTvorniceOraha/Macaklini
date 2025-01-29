@@ -79,7 +79,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 10
   m_Sprite: {fileID: 21300000, guid: e3dd1045591a8804082502475b716e67, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 1
@@ -103,7 +103,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2621117344
+  GlobalObjectIdHash: 4190165315
   InScenePlacedSourceGlobalObjectIdHash: 1141713879
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -176,7 +176,7 @@ MonoBehaviour:
   UseQuaternionCompression: 1
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
-  Interpolate: 0
+  Interpolate: 1
   SlerpPosition: 0
 --- !u!114 &-2236645343496076721
 MonoBehaviour:
@@ -208,11 +208,12 @@ MonoBehaviour:
   whatIsEnemy:
     serializedVersion: 2
     m_Bits: 73
-  DEBUG_POINT: {fileID: 767515263661167483, guid: 4793c56c2edc2a045b5605c2bb7c5f15, type: 3}
+  DEBUG_POINT: {fileID: 5132098910828147348, guid: 5a4d734364cf9eb46b3c3c01b63ea950, type: 3}
   maxAmmo: 6
   isAutomatic: 0
   isShotgun: 0
   fireRate: 90
+  damage: 10
 --- !u!82 &-7592669934249859881
 AudioSource:
   m_ObjectHideFlags: 0
