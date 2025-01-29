@@ -2,7 +2,7 @@ using System;
 using Unity.Netcode;
 using UnityEngine;
 
-public class HealthManager : MonoBehaviour
+public class HealthScript : MonoBehaviour
 {
     public int MaxHealth = 100;
     public int CurrentHealth { get; private set; }

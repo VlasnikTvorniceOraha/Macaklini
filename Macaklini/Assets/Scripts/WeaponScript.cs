@@ -16,6 +16,7 @@ public class WeaponScript : NetworkBehaviour
     private AudioSource sound;
     private bool readyToShoot = true;
     private NetworkManager _networkManager;
+    private NetworkObject _networkObject;
     private int ammo;
     private float _originalY;
     private bool _isEquipped = false;
@@ -34,6 +35,7 @@ public class WeaponScript : NetworkBehaviour
         ammo = maxAmmo;
         _originalY = transform.position.y;
         _networkManager = GameObject.Find("NetworkManager").GetComponent<NetworkManager>();
+        _networkObject = GetComponent<NetworkObject>();
         if (!_networkManager) Debug.LogError("Network manager not found!");
         else Debug.Log("Network manager initialized");
     }
@@ -128,6 +130,9 @@ public class WeaponScript : NetworkBehaviour
             _rayHit = Physics2D.Raycast(shootPoint.position, shootPoint.right, 1000f, whatIsEnemy);
             if (_rayHit)
             {
+                Debug.LogFormat("we are client with id {0} and we shot a 2D collider of an object with tag {1}", _networkObject.OwnerClientId, _rayHit.collider.gameObject.tag);
+                // neka od ovih stvari je null
+                // _rayHit.collider.gameObject.GetComponent<HealthScript>().TakeDamage(10, (int)_networkObject.OwnerClientId); 
                 ShootServerRpc(_rayHit.point);
             }
         }

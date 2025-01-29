@@ -50,7 +50,8 @@ public class PlayerController : NetworkBehaviour
     private float _jumpBuffertime = 0.1f; // the bigger the value, the more time the player has to jump before landing on the ground
     private float _defaultPlayerGravityScale = 3f;
     private float _sideWallJumpPower = 10f;
-    private float _sideJumpSpeedLossFactor = 0.05f;
+    private float _sideJumpSpeedLossFactor = 0.05f; // increase to make player lose more horizontal speed when side jumping
+    private float _stickyWallGravityScaleFactor = 0.1f; // increase to make player slide down the sticky wall faster
 
     // player spawning points
     private GameObject[] _playerSpawnPoints;
@@ -128,7 +129,7 @@ public class PlayerController : NetworkBehaviour
 
                 if (_bStickyWallSlidingEnabled && !_bStickyJumpUsed && _horizontalInput <= 0)
                 {
-                    _rb2d.gravityScale = 0.05f * _defaultPlayerGravityScale;
+                    _rb2d.gravityScale = _stickyWallGravityScaleFactor * _defaultPlayerGravityScale;
                 }
                 else if (_bStickyWallSlidingEnabled && !_bStickyJumpUsed && _horizontalInput > 0)
                 {
@@ -142,7 +143,7 @@ public class PlayerController : NetworkBehaviour
                 
                 if (_bStickyWallSlidingEnabled && !_bStickyJumpUsed && _horizontalInput >= 0)
                 {
-                    _rb2d.gravityScale = 0.05f * _defaultPlayerGravityScale;
+                    _rb2d.gravityScale = _stickyWallGravityScaleFactor * _defaultPlayerGravityScale;
                 }
                 else if (_bStickyWallSlidingEnabled && !_bStickyJumpUsed && _horizontalInput < 0)
                 {
