@@ -22,20 +22,23 @@ public class HealthScript : MonoBehaviour
 
     public void TakeDamage(int amount, int shooterId)
     {
-        Debug.LogFormat("taking {0} damage from client {1}", amount, shooterId);
         if (amount < 0)
         {
             throw new ArgumentException("Damage amount cannot be negative");
         }
-        
         CurrentHealth -= amount;
         if (CurrentHealth <= 0)
         {
+            // this is my ID, I am dead :)
+            int deadPlayerId = (int)GetComponent<NetworkObject>().OwnerClientId;
             CurrentHealth = 0;
+            Debug.LogFormat("i am client {0} and I died", deadPlayerId);
             
             if (_gameManager != null)
             {
-                _gameManager.AddDeath((int)GetComponent<NetworkObject>().OwnerClientId);
+                // mrežno poručiti protivniku da smo mu slomili koljena i da se vise ne moze kretati
+                _gameManager.DisablePlayerMovementRpc(deadPlayerId);
+                _gameManager.AddDeath(deadPlayerId);
                 _gameManager.AddKill(shooterId);
             }
         }

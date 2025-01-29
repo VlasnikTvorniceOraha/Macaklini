@@ -279,7 +279,7 @@ public class PlayerController : NetworkBehaviour
             // sticky wall is left of the player
             if (cumulatedContactDirection.x < 0)
             {
-                Debug.LogFormat("sticky wall is left of the player");
+                // Debug.LogFormat("sticky wall is left of the player");
                 _jumpDirection = Vector2.right;
                 _rb2d.velocity = new Vector2(0, 0);
                 _rb2d.gravityScale = 0;
@@ -288,7 +288,7 @@ public class PlayerController : NetworkBehaviour
             // sticky wall is right of the player
             else if (cumulatedContactDirection.x > 0)
             {
-                Debug.LogFormat("sticky wall is right of the player");
+                // Debug.LogFormat("sticky wall is right of the player");
                 _jumpDirection = Vector2.left;
                 _rb2d.velocity = new Vector2(0, 0);
                 _rb2d.gravityScale = 0;
@@ -301,12 +301,12 @@ public class PlayerController : NetworkBehaviour
             // sticky wall is on top of the player
             if (cumulatedContactDirection.y > 0)
             {
-                Debug.LogFormat("sticky wall is on top of the player");
+                // Debug.LogFormat("sticky wall is on top of the player");
             }
             // sticky wall is bottom of the player
             else if (cumulatedContactDirection.y < 0)
             {
-                Debug.LogFormat("sticky wall is below the player");
+                // Debug.LogFormat("sticky wall is below the player");
             }
         }
     }
@@ -317,7 +317,7 @@ public class PlayerController : NetworkBehaviour
     {
         if (other.gameObject.CompareTag("Sticky"))
         {
-            Debug.LogFormat("exit from sticky");
+            // Debug.LogFormat("exit from sticky");
             _rb2d.gravityScale = _defaultPlayerGravityScale;
             _bStickyJumpUsed = true;
         }

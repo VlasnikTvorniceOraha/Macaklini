@@ -614,4 +614,43 @@ public class GameManager : NetworkBehaviour
 
         }
     }
+    
+    [Rpc(SendTo.ClientsAndHost)]
+    public void DamagePlayerRpc(int damage, int shooterId, int hitPlayerId)
+    {
+        if ((int)_networkManager.LocalClientId == hitPlayerId)
+        {
+            GameObject myPlayer = null;
+            GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+            foreach(GameObject player in players)
+            {
+                if (player.GetComponent<NetworkObject>().OwnerClientId == _networkManager.LocalClientId)
+                {
+                    myPlayer = player;
+                }
+            }
+            HealthScript ownedHealthScript = myPlayer.GetComponent<HealthScript>();
+            ownedHealthScript.TakeDamage(damage, shooterId);
+
+        }
+    }
+    
+    [Rpc(SendTo.ClientsAndHost)]
+    public void DisablePlayerMovementRpc(int deadPlayerId)
+    {
+        if ((int)_networkManager.LocalClientId == deadPlayerId)
+        {
+            GameObject myPlayer = null;
+            GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+            foreach(GameObject player in players)
+            {
+                if (player.GetComponent<NetworkObject>().OwnerClientId == _networkManager.LocalClientId)
+                {
+                    myPlayer = player;
+                }
+            }
+            PlayerController ownedController = myPlayer.GetComponent<PlayerController>();
+            ownedController.canMove = false;
+        }
+    }
 }
