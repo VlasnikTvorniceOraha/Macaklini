@@ -79,7 +79,11 @@ public class PlayerController : NetworkBehaviour
         
     }
     
-    
+    //zahtjevam svoj info od servera za postavljanje spritea i tako
+    private void RequestPlayerInfoRpc()
+    {
+
+    }
     
     public override void OnNetworkSpawn()
     {

@@ -30,6 +30,8 @@ public class GameManager : NetworkBehaviour
     private NetworkManager _networkManager;
     private UIManager _uiManager;
     private List<PlayerInfoGame> playerInfosGame = new List<PlayerInfoGame>(); // lista na serveru za sve igrace
+
+    private PlayerInfoGame localPlayerInfo; //lokalni player info za postavljanje spritea
     private NetworkVariable<int> roundNumber = new NetworkVariable<int>(1, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private List<Transform> playerScorecards = new List<Transform>();
     private TMP_Text readyText;
@@ -121,14 +123,23 @@ public class GameManager : NetworkBehaviour
     
     IEnumerator ReadyCountdown()
     {
-        yield return new WaitForEndOfFrame();
+        yield return new WaitForSeconds(1.0f);
         // pronadi kojeg igraca posjedujem
         roundState = RoundState.RoundInProgress;
         Vector3 ownedPlayerPos = Vector3.zero;
 
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
 
-        GameObject myPlayer = players.First(player => player.GetComponent<PlayerController>().ownerId.Value == (int)_networkManager.LocalClientId);
+        GameObject myPlayer = null;
+
+        foreach(GameObject player in players)
+        {
+            Debug.Log("Player with ID " + player.GetComponent<PlayerController>().ownerId.Value);
+            if (player.GetComponent<PlayerController>().ownerId.Value == (int)_networkManager.LocalClientId)
+            {
+                myPlayer = player;
+            }
+        }
         PlayerController ownedController = myPlayer.GetComponent<PlayerController>();
         ownedPlayerPos = myPlayer.transform.position;
 
@@ -525,7 +536,7 @@ public class GameManager : NetworkBehaviour
 
     private IEnumerator InstancePlayersCoroutine(PlayerInfoGame[] playerInfos)
     {
-        yield return new WaitForEndOfFrame();
+        yield return new WaitForSeconds(0.5f);
         //pronadi moj playerinfo
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
         Debug.Log(players.Length);
