@@ -281,11 +281,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6507801361786281913, guid: 515d9c1bb8160a94d9190f129bf85c04, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.21
+      value: 1.35
       objectReference: {fileID: 0}
     - target: {fileID: 6507801361786281913, guid: 515d9c1bb8160a94d9190f129bf85c04, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 4.13
+      value: 3.78
       objectReference: {fileID: 0}
     - target: {fileID: 6507801361786281913, guid: 515d9c1bb8160a94d9190f129bf85c04, type: 3}
       propertyPath: m_LocalPosition.z
@@ -9787,7 +9787,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6507801361786281913, guid: 515d9c1bb8160a94d9190f129bf85c04, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -4.75
+      value: -3.94
       objectReference: {fileID: 0}
     - target: {fileID: 6507801361786281913, guid: 515d9c1bb8160a94d9190f129bf85c04, type: 3}
       propertyPath: m_LocalPosition.z
@@ -9849,7 +9849,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6507801361786281913, guid: 515d9c1bb8160a94d9190f129bf85c04, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -4.66
+      value: -3.9
       objectReference: {fileID: 0}
     - target: {fileID: 6507801361786281913, guid: 515d9c1bb8160a94d9190f129bf85c04, type: 3}
       propertyPath: m_LocalPosition.z
@@ -10013,7 +10013,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6507801361786281913, guid: 515d9c1bb8160a94d9190f129bf85c04, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 4.32
+      value: 3.75
       objectReference: {fileID: 0}
     - target: {fileID: 6507801361786281913, guid: 515d9c1bb8160a94d9190f129bf85c04, type: 3}
       propertyPath: m_LocalPosition.z
@@ -15605,7 +15605,7 @@ CompositeCollider2D:
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
-  m_GeometryType: 0
+  m_GeometryType: 1
   m_GenerationType: 0
   m_EdgeRadius: 0
   m_ColliderPaths:
