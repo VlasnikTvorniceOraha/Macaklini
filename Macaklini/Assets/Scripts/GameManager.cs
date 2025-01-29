@@ -121,22 +121,16 @@ public class GameManager : NetworkBehaviour
     
     IEnumerator ReadyCountdown()
     {
+        yield return new WaitForEndOfFrame();
         // pronadi kojeg igraca posjedujem
         roundState = RoundState.RoundInProgress;
-        
         Vector3 ownedPlayerPos = Vector3.zero;
-        PlayerController ownedController = null;
 
-        foreach (PlayerInfoGame player in playerInfosGame)
-        {
-            if (player.PlayerController.IsOwner)
-            {
-                ownedController = player.PlayerController;
-                ownedController.canMove = false;
-                ownedPlayerPos = ownedController.transform.position;
-                break;
-            }
-        }
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+
+        GameObject myPlayer = players.First(player => player.GetComponent<PlayerController>().ownerId.Value == (int)_networkManager.LocalClientId);
+        PlayerController ownedController = myPlayer.GetComponent<PlayerController>();
+        ownedPlayerPos = myPlayer.transform.position;
 
         // zumiraj kameru na igraca i postavi poziciju na njega
         Camera mainCamera = Camera.main; // this is done to avoid a small CPU overhead at every call of Camera.main
@@ -510,10 +504,50 @@ public class GameManager : NetworkBehaviour
         {
             GameObject playerInstance = Instantiate(playerPrefab);
             playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject((ulong)currentPlayer.ClientId);
-            playerInstance.GetComponent<SpriteRenderer>().sprite = _uiManager.GUNsterSpriteovi[currentPlayer.PlayerGunster];
-            currentPlayer.PlayerController = playerInstance.GetComponent<PlayerController>();
             
+            currentPlayer.PlayerController = playerInstance.GetComponent<PlayerController>();
+            currentPlayer.PlayerController.ownerId.Value = currentPlayer.ClientId;
         }
+
+
+        //postavi spriteove
+        InstancePlayersRpc(playerInfosGame.ToArray());
+    }
+
+    [Rpc(SendTo.ClientsAndHost)]
+    private void InstancePlayersRpc(PlayerInfoGame[] playerInfos)
+    {
+        
+        StartCoroutine(InstancePlayersCoroutine(playerInfos));
+
+        
+    }
+
+    private IEnumerator InstancePlayersCoroutine(PlayerInfoGame[] playerInfos)
+    {
+        yield return new WaitForEndOfFrame();
+        //pronadi moj playerinfo
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        Debug.Log(players.Length);
+        foreach (GameObject player in players) 
+        {
+            PlayerController playerController = player.GetComponent<PlayerController>();
+            foreach (PlayerInfoGame playerInfo in playerInfos)
+            {
+                Debug.Log("Klijent ID ovog igraca je " + playerInfo.ClientId);
+                Debug.Log("Kontroler ima ownera " + playerController.ownerId.Value);
+                if (playerInfo.ClientId == playerController.ownerId.Value)
+                {
+                    
+                    Debug.Log("Sprite postavljen");
+                    player.GetComponent<SpriteRenderer>().sprite = _uiManager.GUNsterSpriteovi[playerInfo.PlayerGunster];
+                    
+                }
+            }
+
+        }
+
+        
     }
 
     void InstanceWeapons()
