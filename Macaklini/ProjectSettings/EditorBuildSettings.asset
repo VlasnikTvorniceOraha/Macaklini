@@ -8,19 +8,19 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/MainMenu.unity
     guid: 34f7cd0ede9d0a041b2ba746b5f3b848
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Luka.unity
     guid: bf12156b3ac597440ad7171ffaccaffb
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Borna.unity
     guid: 722a568c5eafa0b4cada8105ef763dd4
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Testing.unity
     guid: 7f8831183106c294a8541330c8b6423e
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Luka2.unity
     guid: cb8b8f740be4fae47a3b9dcc9990fc9f
   - enabled: 1
@@ -32,4 +32,19 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Kuhinja.unity
     guid: 2f52d6c89b2409f4f8b244421f5d2338
+  - enabled: 1
+    path: Assets/Scenes/Knjiznica.unity
+    guid: 7651afe319cc7fe4cba1f28886b18cde
+  - enabled: 1
+    path: Assets/Scenes/Knjiznica 1.unity
+    guid: f310718617bc0e243a8a9e30b26b6faf
+  - enabled: 1
+    path: Assets/Scenes/Kuhinja 1.unity
+    guid: 48e4d443751cc7544b7d7807981007ef
+  - enabled: 1
+    path: Assets/Scenes/Podrum 1.unity
+    guid: e1589af4074937044b068933f21b85ab
+  - enabled: 1
+    path: Assets/Scenes/Vrt 1.unity
+    guid: e1c9ea6dcdeeeb94e8fc47bf9b61ff9a
   m_configObjects: {}

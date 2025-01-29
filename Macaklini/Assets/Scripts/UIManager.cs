@@ -259,6 +259,7 @@ public class UIManager : NetworkBehaviour
         playerInfos.Add(playerInfo);
         receivedPlayerInfo = true;
         
+        
     }
     
     
