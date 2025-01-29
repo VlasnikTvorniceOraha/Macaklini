@@ -249,7 +249,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: LevelsToLoad.Array.size
-      value: 5
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: weaponPrefabs.Array.size
@@ -277,15 +277,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: LevelsToLoad.Array.data[5]
-      value: Kuhinja 1
+      value: Knjiznica
       objectReference: {fileID: 0}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: LevelsToLoad.Array.data[6]
-      value: Kuhinja 1
+      value: Knjiznica 1
       objectReference: {fileID: 0}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: LevelsToLoad.Array.data[7]
-      value: Kuhinja 1
+      value: Podrum 1
       objectReference: {fileID: 0}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: weaponPrefabs.Array.data[2]
