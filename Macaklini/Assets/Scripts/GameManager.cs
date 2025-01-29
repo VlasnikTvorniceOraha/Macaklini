@@ -478,7 +478,7 @@ public class GameManager : NetworkBehaviour
             if (player.ClientId == clientId)
             {
                 player.Deaths += 1;
-                
+                player.PlayerController.isAlive.Value = false;
             }
         }
         StartCoroutine(AfterDeathCheck());
