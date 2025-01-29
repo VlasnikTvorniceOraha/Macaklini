@@ -51,6 +51,8 @@ public class PlayerController : NetworkBehaviour
     private float _coyoteTime = 0.2f; // the bigger the value, the more time the player has to jump button after going over the edge
     private float _jumpBuffertime = 0.1f; // the bigger the value, the more time the player has to jump before landing on the ground
     private float _defaultPlayerGravityScale = 3f;
+    private float _sideWallJumpPower = 10f;
+    private float _sideJumpSpeedLossFactor = 0.05f;
 
     // player spawning points
     private GameObject[] _playerSpawnPoints;
@@ -128,7 +130,7 @@ public class PlayerController : NetworkBehaviour
             }
             else if (_jumpDirection == Vector2.left)
             {
-                _rb2d.velocity = new Vector2(0.9f * _rb2d.velocity.x, _rb2d.velocity.y);
+                _rb2d.velocity = new Vector2((1 - _sideJumpSpeedLossFactor) * _rb2d.velocity.x, _rb2d.velocity.y);
 
                 if (_bStickyWallSlidingEnabled && !_bStickyJumpUsed && _horizontalInput <= 0)
                 {
@@ -142,7 +144,7 @@ public class PlayerController : NetworkBehaviour
             }
             else if (_jumpDirection == Vector2.right)
             {
-                _rb2d.velocity = new Vector2(0.9f * _rb2d.velocity.x, _rb2d.velocity.y);
+                _rb2d.velocity = new Vector2((1 - _sideJumpSpeedLossFactor) * _rb2d.velocity.x, _rb2d.velocity.y);
                 
                 if (_bStickyWallSlidingEnabled && !_bStickyJumpUsed && _horizontalInput >= 0)
                 {
@@ -225,7 +227,7 @@ public class PlayerController : NetworkBehaviour
         {
             if (Input.GetButtonDown("Jump") && !_bStickyJumpUsed)
             {
-                _rb2d.velocity = new Vector2(-_jumpingPower, _rb2d.velocity.y);
+                _rb2d.velocity = new Vector2(-_jumpingPower, _rb2d.velocity.y + _sideWallJumpPower);
             }
         }
         // side jump right
@@ -233,7 +235,7 @@ public class PlayerController : NetworkBehaviour
         {
             if (Input.GetButtonDown("Jump") && !_bStickyJumpUsed)
             {
-                _rb2d.velocity = new Vector2(_jumpingPower, _rb2d.velocity.y);
+                _rb2d.velocity = new Vector2(_jumpingPower, _rb2d.velocity.y + _sideWallJumpPower);
             }
         }
     }
@@ -275,7 +277,7 @@ public class PlayerController : NetworkBehaviour
             cumulatedContactDirection.x += contact.point.x - gameObject.transform.position.x;
             cumulatedContactDirection.y += contact.point.y - gameObject.transform.position.y;
         }
-        Debug.LogFormat("cumulatedContactDirection: {0}, {1}", cumulatedContactDirection.x, cumulatedContactDirection.y);
+        // Debug.LogFormat("cumulatedContactDirection: {0}, {1}", cumulatedContactDirection.x, cumulatedContactDirection.y);
 
         if (MathF.Abs(cumulatedContactDirection.x) > MathF.Abs(cumulatedContactDirection.y))
         {
