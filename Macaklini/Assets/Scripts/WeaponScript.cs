@@ -136,7 +136,7 @@ public class WeaponScript : NetworkBehaviour
             _rayHit = Physics2D.Raycast(shootPoint.position, shootPoint.right, 1000f, whatIsEnemy);
             if (_rayHit)
             {
-                ShootServerRpc(_rayHit.point);
+                ShootServerRpc(shootPoint.position, _rayHit.point);
 
                 if (_rayHit.collider.gameObject.CompareTag("Player"))
                 {
@@ -155,17 +155,17 @@ public class WeaponScript : NetworkBehaviour
 
 
     [Rpc(SendTo.Server)]
-    void ShootServerRpc(Vector2 hitPoint)
+    void ShootServerRpc(Vector3 shootPoint, Vector2 hitPoint)
     {
-        ShootClientRpc(hitPoint);
+        ShootClientRpc(shootPoint, hitPoint);
     }
 
 
 
     [Rpc(SendTo.ClientsAndHost)]
-    void ShootClientRpc(Vector2 hitPoint)
+    void ShootClientRpc(Vector3 shootPoint, Vector2 hitPoint)
     {
-        TrailRenderer trail = Instantiate(bulletTrail, shootPoint.position, Quaternion.identity);
+        TrailRenderer trail = Instantiate(bulletTrail, shootPoint, Quaternion.identity);
         StartCoroutine(SpawnTrail(trail, hitPoint));
     }
 
