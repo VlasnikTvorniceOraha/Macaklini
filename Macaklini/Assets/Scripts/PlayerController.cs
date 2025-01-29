@@ -9,6 +9,7 @@ public class PlayerController : NetworkBehaviour
     public Transform groundCheck;
     public LayerMask groundLayer;
     public NetworkVariable<bool> isAlive = new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<int> ownerId = new NetworkVariable<int>(-1, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     
     private NetworkManager _networkManager;
     private UnityTransport _unityTransport;
@@ -75,6 +76,7 @@ public class PlayerController : NetworkBehaviour
         _boxCollider = GetComponent<BoxCollider2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        
     }
     
     
