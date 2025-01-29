@@ -193,6 +193,9 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
+  smrtLayer:
+    serializedVersion: 2
+    m_Bits: 256
   isAlive:
     m_InternalValue: 1
   canMove: 0
