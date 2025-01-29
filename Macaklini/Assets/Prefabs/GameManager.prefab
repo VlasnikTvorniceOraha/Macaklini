@@ -71,6 +71,9 @@ MonoBehaviour:
   LevelsToLoad:
   - SampleScene
   - Testing
+  - Kuhinja
+  - Podrum
+  - Vrt
   gamesNeededToWin: 2
   scoreboard: {fileID: 0}
   weaponPrefabs:

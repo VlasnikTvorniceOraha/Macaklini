@@ -23,4 +23,13 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Luka2.unity
     guid: cb8b8f740be4fae47a3b9dcc9990fc9f
+  - enabled: 1
+    path: Assets/Scenes/Vrt.unity
+    guid: 09e980909b435ae4d956368ee1b305c7
+  - enabled: 1
+    path: Assets/Scenes/Podrum.unity
+    guid: 5d82f6cf3ab4a5d41b111f4b2337b55f
+  - enabled: 1
+    path: Assets/Scenes/Kuhinja.unity
+    guid: 2f52d6c89b2409f4f8b244421f5d2338
   m_configObjects: {}
