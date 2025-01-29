@@ -176,7 +176,7 @@ MonoBehaviour:
   UseQuaternionCompression: 1
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
-  Interpolate: 0
+  Interpolate: 1
   SlerpPosition: 0
 --- !u!114 &-3044443809275020456
 MonoBehaviour:
@@ -208,7 +208,7 @@ MonoBehaviour:
   whatIsEnemy:
     serializedVersion: 2
     m_Bits: 73
-  DEBUG_POINT: {fileID: 767515263661167483, guid: 4793c56c2edc2a045b5605c2bb7c5f15, type: 3}
+  DEBUG_POINT: {fileID: 5132098910828147348, guid: 5a4d734364cf9eb46b3c3c01b63ea950, type: 3}
   maxAmmo: 3
   isAutomatic: 0
   isShotgun: 1
