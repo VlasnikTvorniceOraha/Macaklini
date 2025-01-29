@@ -1,7 +1,6 @@
 using System.Collections;
 using UnityEngine;
 using Unity.Netcode;
-using UnityEditor.PackageManager;
 
 public class WeaponScript : NetworkBehaviour
 {
