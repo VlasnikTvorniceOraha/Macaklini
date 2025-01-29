@@ -38,6 +38,9 @@ public class GameManager : NetworkBehaviour
 
     private GameObject[] _weaponSpawnPoints;
     [SerializeField] private GameObject[] weaponPrefabs;
+
+    private GameObject _playerSpawnPointsParent;
+    private List<GameObject> _playerSpawnPointsChildren;
     
     // Start is called before the first frame update
     void Start()
@@ -99,6 +102,23 @@ public class GameManager : NetworkBehaviour
         {
             return;
         }
+        
+        Debug.LogFormat("AAAAAAAAAAAAAAAAAA START");
+        _playerSpawnPointsParent = GameObject.Find("PlayerSpawnPoints");
+        _playerSpawnPointsChildren = new List<GameObject>();
+        if (_playerSpawnPointsParent != null)
+        {
+            foreach (Transform child in _playerSpawnPointsParent.transform)
+            {
+                _playerSpawnPointsChildren.Add(child.gameObject);
+            }
+            Debug.Log($"Found {_playerSpawnPointsChildren.Count} child objects under PlayerSpawnPoints.");
+            foreach (var sp in _playerSpawnPointsChildren)
+            {
+                Debug.LogFormat("child transform: {0}, {1}, {2}", sp.transform.position.x, sp.transform.position.y, sp.transform.position.z);
+            }
+        }
+        Debug.LogFormat("AAAAAAAAAAAAAAAAAA END");
         
         Debug.Log("Runda pocinje");
         roundState = RoundState.RoundStarting;
@@ -435,6 +455,8 @@ public class GameManager : NetworkBehaviour
         {
             return;
         }
+        
+        Debug.LogFormat("adding death to player {0}", clientId);
 
         foreach (PlayerInfoGame player in playerInfosGame)
         {
@@ -469,6 +491,8 @@ public class GameManager : NetworkBehaviour
         {
             return;
         }
+        
+        Debug.LogFormat("adding kill to player {0}", clientId);
 
         foreach (PlayerInfoGame player in playerInfosGame)
         {
@@ -531,11 +555,14 @@ public class GameManager : NetworkBehaviour
         {
             GameObject playerInstance = Instantiate(playerPrefab);
             playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject((ulong)currentPlayer.ClientId);
-            
             currentPlayer.PlayerController = playerInstance.GetComponent<PlayerController>();
+            // set player spawn position according to client id
+            Vector3 wantedPosition = _playerSpawnPointsChildren[currentPlayer.ClientId].transform.position;
+            Debug.LogFormat("INSTANTIATED PLAYER WITH CLIENT ID {0}, SETTING LOCATION TO {1}, {2}, {3}",
+                currentPlayer.ClientId, wantedPosition.x, wantedPosition.y, wantedPosition.z);
+            playerInstance.transform.position = wantedPosition;
         }
-
-
+        
         //postavi spriteove
         InstancePlayersRpc(playerInfosGame.ToArray());
     }
@@ -557,7 +584,6 @@ public class GameManager : NetworkBehaviour
         Debug.Log(players.Length);
         foreach (GameObject player in players) 
         {
-            
             foreach (PlayerInfoGame playerInfo in playerInfos)
             {
                 
@@ -569,10 +595,7 @@ public class GameManager : NetworkBehaviour
                     
                 }
             }
-
         }
-
-        
     }
 
     private void DespawnPlayers()
@@ -631,7 +654,6 @@ public class GameManager : NetworkBehaviour
             }
             HealthScript ownedHealthScript = myPlayer.GetComponent<HealthScript>();
             ownedHealthScript.TakeDamage(damage, shooterId);
-
         }
     }
     
