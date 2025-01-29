@@ -8,6 +8,7 @@ public class PlayerController : NetworkBehaviour
 {
     public Transform groundCheck;
     public LayerMask groundLayer;
+    public LayerMask smrtLayer;
     public NetworkVariable<bool> isAlive = new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);    
     private NetworkManager _networkManager;
     private UnityTransport _unityTransport;
@@ -23,6 +24,7 @@ public class PlayerController : NetworkBehaviour
     private bool _isGroundedLeft;
     private bool _isGroundedRight;
     private bool _isGrounded;
+    private bool _isInMikser;
     
     // movement variables
     private float _horizontalInput;
@@ -178,12 +180,24 @@ public class PlayerController : NetworkBehaviour
         _isGroundedLeft = Physics2D.Raycast(_bottomLeftCorner, Vector2.down, 0.1f, groundLayer);
         _isGroundedRight = Physics2D.Raycast(_bottomRightCorner, Vector2.down, 0.1f, groundLayer);
         _isGrounded = _isGroundedLeft || _isGroundedRight;
+
+        // isInMikser check
+        _isGroundedLeft = Physics2D.Raycast(_bottomLeftCorner, Vector2.down, 0.1f, smrtLayer);
+        _isGroundedRight = Physics2D.Raycast(_bottomRightCorner, Vector2.down, 0.1f, smrtLayer);
+        _isInMikser = _isGroundedLeft || _isGroundedRight;
         
+    
         if (_isGrounded)
         {
             _coyoteTimeCounter = _coyoteTime;
             _rb2d.gravityScale = _defaultPlayerGravityScale;
             _jumpDirection = Vector2.up;
+        }
+
+        if (_isInMikser)
+        {
+            isAlive.Value = false;
+
         }
 
         // normal jump
