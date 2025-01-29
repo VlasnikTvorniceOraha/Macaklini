@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using Unity.Netcode;
+using UnityEditor.PackageManager;
 
 public class WeaponScript : NetworkBehaviour
 {
@@ -53,6 +54,7 @@ public class WeaponScript : NetworkBehaviour
 
         if (_isEquipped && IsOwner)
         {
+
             RotateToFollowMouse();
 
             bool shooting = false;
@@ -96,7 +98,7 @@ public class WeaponScript : NetworkBehaviour
             else if (ammo <= 0)
             {
                 playerWeaponManager.DropWeapon();
-                Destroy(gameObject, 0.5f);
+                DestroyWeaponServerRpc();
             }
         }
     }
@@ -108,6 +110,7 @@ public class WeaponScript : NetworkBehaviour
 
     private void RotateToFollowMouse()
     {
+        Debug.Log("Rotating weapon to follow mouse...");
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector2 direction = mousePosition - transform.position;
         float weaponAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
@@ -143,6 +146,12 @@ public class WeaponScript : NetworkBehaviour
         }
     }
 
+    [Rpc(SendTo.Server)]
+    private void DestroyWeaponServerRpc()
+    {
+        if (!IsServer) return;
+        GetComponent<NetworkObject>().Despawn(true); // Despawns on all clients
+    }
 
 
     [Rpc(SendTo.Server)]
@@ -203,35 +212,35 @@ public class WeaponScript : NetworkBehaviour
     }
 
     [Rpc(SendTo.Server)]
-    private void WeaponPickedUpServerRPC(ulong ClientId)
+    private void WeaponPickedUpServerRPC(ulong clientId)
     {
-        GetComponent<NetworkObject>().ChangeOwnership(ClientId);
-        Invoke(nameof(InvokeClientPickup), 0.1f);
+        if (!IsServer) return; // Ensure only the server executes this
+
+        NetworkObject networkObject = GetComponent<NetworkObject>();
+        if (networkObject != null && networkObject.IsSpawned)
+        {
+            Debug.Log($"[SERVER] Changing weapon ownership to Client {clientId}. Current Owner: {networkObject.OwnerClientId}");
+            networkObject.ChangeOwnership(clientId);
+            StartCoroutine(DelayedClientPickup(clientId));
+        }
     }
 
-    private void InvokeClientPickup()
+    private IEnumerator DelayedClientPickup(ulong clientId)
     {
-        WeaponPickedUpClientRPC(RpcTarget.Single(NetworkManager.LocalClientId, RpcTargetUse.Temp));
+        yield return new WaitForSeconds(0.1f); // Small delay ensures ownership update
+        WeaponPickedUpClientRPC(RpcTarget.Single(clientId, RpcTargetUse.Temp));
     }
 
     [Rpc(SendTo.SpecifiedInParams)]
     private void WeaponPickedUpClientRPC(RpcParams rpcParams = default)
     {
-        if (rpcParams.Receive.SenderClientId == NetworkManager.LocalClientId)
-        {
-            Debug.Log("WeaponPickedUpClientRPC called for client: " + NetworkManager.LocalClientId);
+        if (!IsOwner) return; // Only the new owner should run this
 
-            if (_playerTransform != null)
-            {
-                _isEquipped = true;
-                GetComponent<CircleCollider2D>().enabled = false;
-                _followTransform.SetTargetTransform(_playerTransform);
-                playerWeaponManager.EquipWeapon();
-            }
-            else
-            {
-                Debug.LogError("Player transform was not cached correctly!");
-            }
-        }
+        Debug.Log($"[CLIENT {NetworkManager.LocalClientId}] Weapon picked up. Current Owner: {GetComponent<NetworkObject>().OwnerClientId}");
+
+        _isEquipped = true;
+        GetComponent<CircleCollider2D>().enabled = false;
+        _followTransform.SetTargetTransform(_playerTransform);
+        playerWeaponManager.EquipWeapon();
     }
 }
