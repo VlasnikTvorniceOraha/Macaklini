@@ -51,6 +51,9 @@ public class PlayerController : NetworkBehaviour
     private float _jumpBuffertime = 0.1f; // the bigger the value, the more time the player has to jump before landing on the ground
     private float _defaultPlayerGravityScale = 3f;
 
+    // player spawning points
+    private GameObject[] _playerSpawnPoints;
+
 
     public bool HasWeaponEquipped { get; private set; } = false;
 
@@ -75,6 +78,7 @@ public class PlayerController : NetworkBehaviour
         _boxCollider = GetComponent<BoxCollider2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        _playerSpawnPoints = GameObject.FindGameObjectsWithTag("PlayerSpawnPoint");
     }
     
     
@@ -88,11 +92,11 @@ public class PlayerController : NetworkBehaviour
         
         if (IsOwner && IsHost)
         {
-            transform.SetPositionAndRotation(SpawnLocations.SampleSceneSpawnLocations[0], new Quaternion());
+            transform.SetPositionAndRotation(_playerSpawnPoints[0].transform.position, new Quaternion());
         }
         else if (IsOwner && IsClient)
         {
-            transform.SetPositionAndRotation(SpawnLocations.SampleSceneSpawnLocations[1], new Quaternion());
+            transform.SetPositionAndRotation(_playerSpawnPoints[1].transform.position, new Quaternion());
         }
     }
 
