@@ -91,6 +91,21 @@ public class GameManager : NetworkBehaviour
         {
             ToggleScoreboard();
         }
+
+        if (Input.GetKeyDown(KeyCode.K) && _uiManager.gameStarted.Value && IsServer)
+        {
+            GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+
+            foreach (GameObject player in players)
+            {
+                PlayerController playerController = player.GetComponent<PlayerController>();
+
+                if (!playerController.IsOwner)
+                {
+                    playerController.isAlive.Value = false;
+                }
+            }
+        }
     }
     
     
