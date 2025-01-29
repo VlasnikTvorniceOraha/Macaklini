@@ -248,8 +248,24 @@ PrefabInstance:
       value: 1107445889
       objectReference: {fileID: 0}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
+      propertyPath: LevelsToLoad.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: weaponPrefabs.Array.size
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
+      propertyPath: LevelsToLoad.Array.data[0]
+      value: Podrum
+      objectReference: {fileID: 0}
+    - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
+      propertyPath: LevelsToLoad.Array.data[1]
+      value: Kuhinja
+      objectReference: {fileID: 0}
+    - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
+      propertyPath: LevelsToLoad.Array.data[2]
+      value: Vrt
       objectReference: {fileID: 0}
     - target: {fileID: 7591979355275665570, guid: 144ae840fc309514e8bac770f3d115d2, type: 3}
       propertyPath: weaponPrefabs.Array.data[2]
