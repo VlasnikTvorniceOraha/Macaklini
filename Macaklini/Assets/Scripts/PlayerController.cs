@@ -94,14 +94,14 @@ public class PlayerController : NetworkBehaviour
         isAlive.Value = true;
         isAlive.OnValueChanged += CheckForEndOfRoundAfterPlayerDeath;
         
-        if (IsOwner && IsHost)
-        {
-            transform.SetPositionAndRotation(_playerSpawnPoints[0].transform.position, new Quaternion());
-        }
-        else if (IsOwner && IsClient)
-        {
-            transform.SetPositionAndRotation(_playerSpawnPoints[1].transform.position, new Quaternion());
-        }
+        //if (IsOwner && IsHost)
+        //{
+        //    transform.SetPositionAndRotation(_playerSpawnPoints[0].transform.position, new Quaternion());
+        //}
+        //else if (IsOwner && IsClient)
+        //{
+        //    transform.SetPositionAndRotation(_playerSpawnPoints[1].transform.position, new Quaternion());
+        //}
     }
 
     
@@ -196,7 +196,7 @@ public class PlayerController : NetworkBehaviour
 
         if (_isInMikser)
         {
-            isAlive.Value = false;
+            _gameManager.AddDeath((int)GetComponent<NetworkObject>().OwnerClientId);
 
         }
 
