@@ -213,7 +213,7 @@ MonoBehaviour:
   isAutomatic: 0
   isShotgun: 0
   fireRate: 90
-  damage: 10
+  damage: 50
 --- !u!82 &-7592669934249859881
 AudioSource:
   m_ObjectHideFlags: 0
