@@ -116,15 +116,15 @@ public class Weapon : NetworkBehaviour
         WeaponPickedUpClientRPC(RpcTarget.Single(ClientId, RpcTargetUse.Temp));
     }
 
-    [Rpc(SendTo.SpecifiedInParams)]
+    [Rpc(SendTo.ClientsAndHost)]
     private void WeaponPickedUpClientRPC(RpcParams rpcParams = default)
     {
+        GetComponent<CircleCollider2D>().enabled = false;
+        _isEquipped = true;
         if (rpcParams.Receive.SenderClientId == NetworkManager.LocalClientId)
         {
             if (_playerTransform != null)
             {
-                _isEquipped = true;
-                GetComponent<CircleCollider2D>().enabled = false;
                 _followTransform.SetTargetTransform(_playerTransform);
             }
             else
