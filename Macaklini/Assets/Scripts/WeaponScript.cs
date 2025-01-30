@@ -193,11 +193,12 @@ public class WeaponScript : NetworkBehaviour
     {
         if (collision.CompareTag("Player") && collision.TryGetComponent(out NetworkObject networkObject))
         {
-            playerWeaponManager = collision.GetComponent<PlayerController>();
+            PlayerController playerWeaponManager = collision.GetComponent<PlayerController>();
 
 
             if (!playerWeaponManager.HasWeaponEquipped)
             {
+                this.playerWeaponManager = playerWeaponManager;
                 Debug.Log($"{transform.gameObject.name} picked up by {networkObject.OwnerClientId}!");
                 _playerTransform = collision.transform;
                 playerWeaponManager.EquipWeapon();
@@ -213,7 +214,7 @@ public class WeaponScript : NetworkBehaviour
     [Rpc(SendTo.Server)]
     private void WeaponPickedUpServerRPC(ulong clientId)
     {
-        if (!IsServer) return; // Ensure only the server executes this
+        //if (!IsServer) return; // Ensure only the server executes this
 
         NetworkObject networkObject = GetComponent<NetworkObject>();
         if (networkObject != null && networkObject.IsSpawned)
@@ -235,6 +236,7 @@ public class WeaponScript : NetworkBehaviour
     {
         GetComponent<CircleCollider2D>().enabled = false;
         _isEquipped = true;
+        Debug.Log("AAAAAAAAAAAAAAAAAAAAAAA: " + IsOwner + " " + GetComponent<NetworkObject>().OwnerClientId);
 
         if (!IsOwner) return; // Only the new owner should run this
 
