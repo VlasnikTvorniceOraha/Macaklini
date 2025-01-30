@@ -165,11 +165,11 @@ public class PlayerController : NetworkBehaviour
         _horizontalInput = Input.GetAxisRaw("Horizontal");
         if (_horizontalInput < 0)
         {
-            _spriteRenderer.flipX = false;
+            FlipSpriteRendererServerRPC(false);
         }
         else if (_horizontalInput > 0)
         {
-            _spriteRenderer.flipX = true;
+            FlipSpriteRendererServerRPC(true);
         }
 
         // isGrounded check
@@ -249,8 +249,18 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    [Rpc(SendTo.Server)]
+    private void FlipSpriteRendererServerRPC(bool isFlipped)
+    {
+        FlipSpriteRendererClientRPC(isFlipped);
+    }
 
-    
+    [Rpc(SendTo.ClientsAndHost)]
+    private void FlipSpriteRendererClientRPC(bool isFlipped)
+    {
+        _spriteRenderer.flipX = isFlipped;
+    }
+
     private IEnumerator JumpCooldown()
     {
         _isJumping = true;
