@@ -109,7 +109,7 @@ public class WeaponScript : NetworkBehaviour
 
     private void RotateToFollowMouse()
     {
-        Debug.Log("Rotating weapon to follow mouse...");
+        //Debug.Log("Rotating weapon to follow mouse...");
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector2 direction = mousePosition - transform.position;
         float weaponAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
@@ -227,18 +227,19 @@ public class WeaponScript : NetworkBehaviour
     private IEnumerator DelayedClientPickup(ulong clientId)
     {
         yield return new WaitForSeconds(0.1f); // Small delay ensures ownership update
-        WeaponPickedUpClientRPC(RpcTarget.Single(clientId, RpcTargetUse.Temp));
+        WeaponPickedUpClientRPC();
     }
 
-    [Rpc(SendTo.SpecifiedInParams)]
-    private void WeaponPickedUpClientRPC(RpcParams rpcParams = default)
+    [Rpc(SendTo.ClientsAndHost)]
+    private void WeaponPickedUpClientRPC()
     {
+        GetComponent<CircleCollider2D>().enabled = false;
+        _isEquipped = true;
+
         if (!IsOwner) return; // Only the new owner should run this
 
         Debug.Log($"[CLIENT {NetworkManager.LocalClientId}] Weapon picked up. Current Owner: {GetComponent<NetworkObject>().OwnerClientId}");
 
-        _isEquipped = true;
-        GetComponent<CircleCollider2D>().enabled = false;
         _followTransform.SetTargetTransform(_playerTransform);
         playerWeaponManager.EquipWeapon();
     }

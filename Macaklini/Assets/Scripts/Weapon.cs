@@ -119,6 +119,7 @@ public class Weapon : NetworkBehaviour
     [Rpc(SendTo.ClientsAndHost)]
     private void WeaponPickedUpClientRPC(RpcParams rpcParams = default)
     {
+        Debug.Log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
         GetComponent<CircleCollider2D>().enabled = false;
         _isEquipped = true;
         if (rpcParams.Receive.SenderClientId == NetworkManager.LocalClientId)
@@ -131,6 +132,10 @@ public class Weapon : NetworkBehaviour
             {
                 Debug.LogError("Player transform was not cached correctly!");
             }
+        }
+        else
+        {
+            Debug.Log($"Not the right client! Client required: {rpcParams.Receive.SenderClientId}; This client: {NetworkManager.LocalClientId}; Test: {GetComponent<NetworkObject>().OwnerClientId}");
         }
     }
 
